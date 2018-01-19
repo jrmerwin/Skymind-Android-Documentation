@@ -91,5 +91,147 @@ private class AsyncTaskRunner extends AsyncTask<Double, Integer, INDArray> {
             bar.setVisibility(View.INVISIBLE);
         }
 ```
+## Preparing the training data set and user input
+The doInBackground() method will handle the formatting of the training data, the construction of the neural net, the training of the net, and the analysis of the input data by the trained model. The user input has only 4 values, thus we can add those directly to a 1x4 INDArray using the putScalar() method. The training data is much larger and must be converted from CSV lists to matrices through an iterative *for* loop. 
+ 
+The training data is stored in the app as two arrays, one for the Iris measurements named *irisData* which contains a list of 150 iris measurements and another for the labels of iris type named *labelData*. These will be transformed to 150x4 and 150x3 matrices, respectively, so that they can be converted into INDArray objects that the neural network will use for training. 
+```java
+/ This is our main background thread for the neural net
+        @Override
+        protected String doInBackground(Double... params) {
+        //Get the doubles from params, which is an array so they will be 0,1,2,3
+            double pld = params[0];
+            double pwd = params[1];
+            double sld = params[2];
+            double swd = params[3];
+ 
+            //Create input INDArray for the user measurements
+            INDArray actualInput = Nd4j.zeros(1,4);
+            actualInput.putScalar(new int[]{0,0}, pld);
+            actualInput.putScalar(new int[]{0,1}, pwd);
+            actualInput.putScalar(new int[]{0,2}, sld);
+            actualInput.putScalar(new int[]{0,3}, swd);
+ 
+            //Convert the iris data into 150x4 matrix
+            int row=150;
+            int col=4;
+            double[][] irisMatrix=new double[row][col];
+            int i = 0;
+            for(int r=0; r<row; r++){
+                for( int c=0; c<col; c++){
+            irisMatrix[r][c]=com.example.jmerwin.irisclassifier.DataSet.irisData[i++];
+                }
+            }
+ 
+            //Now do the same for the label data
+            int rowLabel=150;
+            int colLabel=3;
+            double[][] twodimLabel=new double[rowLabel][colLabel];
+            int ii = 0;
+            for(int r=0; r<rowLabel; r++){
+                for( int c=0; c<colLabel; c++){
+        twodimLabel[r][c]=com.example.jmerwin.irisclassifier.DataSet.labelData[ii++];
+                }
+            }
+ 
+            //Converting the data matrices into training INDArrays is straight forward
+            INDArray trainingIn = Nd4j.create(irisMatrix);
+            INDArray trainingOut = Nd4j.create(twodimLabel);
+```
+## Building and Training the Neural Network
+Now that our data is ready, we can build a simple multi-layer perceptron with a single hidden layer. The *DenseLayer* class is used to create the input layer and the hidden layer of the network while the *OutputLayer* class is used for the Output layer. The number of columns in the input INDArray must equal to the number of neurons in the input layer (nIn). The number of neurons in the hidden layer input must equal the number inputLayer’s output array (nOut). Finally, the outputLayer input should match the hiddenLayer output. The output must equal the number of possible classifications, which is 3.
+```java
+//define the layers of the network
+        DenseLayer inputLayer = new DenseLayer.Builder()
+                .nIn(4)
+                .nOut(3)
+                .name("Input")
+                .build();
+ 
+        DenseLayer hiddenLayer = new DenseLayer.Builder()
+                .nIn(3)
+                .nOut(3)
+                .name("Hidden")
+                .build();
+ 
+        OutputLayer outputLayer = new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                .nIn(3)
+                .nOut(3)
+                .name("Output")
+                .activation(Activation.SOFTMAX)
+                .build();
+```
+The next step is to build the neural network using *nccBuilder*. The parameters selected below for training are standard. To learn more about optimizing network training, see deeplearning4j.org.
+```java
+        NeuralNetConfiguration.Builder nncBuilder = new NeuralNetConfiguration.Builder();
+        long seed = 6;
+        nncBuilder.seed(seed);
+        nncBuilder.iterations(1000);
+        nncBuilder.learningRate(0.1);
+        nncBuilder.activation(Activation.TANH);
+        nncBuilder.weightInit(WeightInit.XAVIER);
+        nncBuilder.regularization(true).l2(1e-4);
+ 
+        NeuralNetConfiguration.ListBuilder listBuilder = nncBuilder.list();
+        listBuilder.layer(0, inputLayer);
+        listBuilder.layer(1, hiddenLayer);
+        listBuilder.layer(2, outputLayer);
+ 
+        listBuilder.backprop(true);
+ 
+        MultiLayerNetwork myNetwork = new MultiLayerNetwork(listBuilder.build());
+        myNetwork.init();
+ 
+	  //Create a data set from the INDArrays and train the network
+        DataSet myData = new DataSet(trainingIn, trainingOut);
+        myNetwork.fit(myData);
+ 
+	  //Evaluate the input data against the model
+        INDArray actualOutput = myNetwork.output(actualInput);
+        Log.d("myNetwork Output ", actualOutput.toString());
+ 
+	  //Here we return the INDArray to onPostExecute where it can be 
+	  //used to update the UI
+        return actualOutput;
+        }
+       }
+```
+## Updating the UI
+Once the training of the neural network and the classification of the user measurements are complete, the doInBackground() method will finish and onPostExecute() will have access to the main thread and UI, allowing us to update the UI with the classification results. Note that the decimal places reported on the probabilities can be controlled by setting a DecimalFormat pattern.
+```java
+//This is where we update the UI with our classification results
+        @Override
+        protected void onPostExecute(INDArray result) {
+            super.onPostExecute(result);
+ 
+        //Hide the progress bar now that we are finished
+        ProgressBar bar = (ProgressBar) findViewById(R.id.progressBar);
+        bar.setVisibility(View.INVISIBLE);
+ 
+        //Retrieve the three probabilities
+        Double first = result.getDouble(0,0);
+        Double second = result.getDouble(0,1);
+        Double third = result.getDouble(0,2);
+ 
+        //Update the UI with output
+        TextView setosa = (TextView) findViewById(R.id.textView11);
+        TextView versicolor = (TextView) findViewById(R.id.textView12);
+        TextView virginica = (TextView) findViewById(R.id.textView13);
+ 
+        //Limit the double to values to two decimals using DecimalFormat
+        DecimalFormat df2 = new DecimalFormat(".##");
+ 
+        //Set the text of the textViews in UI to show the probabilites
+        setosa.setText(String.valueOf(df2.format(first)));
+        versicolor.setText(String.valueOf(df2.format(second)));
+        virginica.setText(String.valueOf(df2.format(third)));
+ 
+        }
+```
+## Conclusion
+Hopefully this tutorial has illustrated how the compatibility of DL4J with Android makes it easy to build, train, and evaluate neural networks on mobile devices. We used a simple UI to take input values from the measurement and then passed them as the Params in an AsyncTask. The processor intensive steps of data preparation, network layer building, model training, and evaluation of the user data were all performed in the doInBackground() method of the background thread, maintaining a stable and responsive device. Once completed, we passed the output INDArray to onPostExecute() where the the UI was updated to demonstrate the classification results. 
+The limitations of processing power and battery life of mobile devices make training robust, multi-layer networks somewhat unfeasible. To address this limitation, we will next look at an example Android application that saves the trained model on the device for faster performance after an initial training period.
+The complete repo for this example is available here: 
+
 
 

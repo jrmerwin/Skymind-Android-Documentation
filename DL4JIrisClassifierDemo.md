@@ -14,7 +14,7 @@ Deeplearning4J applications require several dependencies in the build.gradle fil
 	compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-x86'
   compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-arm'
 ```
-Some conflicts exist within these dependencies that must be handled in the build.gradle file. The DL4J and ND4J libraries have several identically named files in them which requires exclusion parameters in the packagingOptions. After added the above dependencies to the build.gradle file, try syncing Gradle with the below exclusions and add additional exclusions if needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: > More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'
+Some conflicts exist within these dependencies that must be handled in the build.gradle file. The DL4J and ND4J libraries have several identically named files in them which requires exclusion parameters in the packagingOptions. After added the above dependencies to the build.gradle file, try syncing Gradle with the below exclusions and add additional exclusions if needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: **> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'**
 ```java
 packagingOptions {
  

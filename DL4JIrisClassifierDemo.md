@@ -231,7 +231,8 @@ Once the training of the neural network and the classification of the user measu
 ## Conclusion
 Hopefully this tutorial has illustrated how the compatibility of DL4J with Android makes it easy to build, train, and evaluate neural networks on mobile devices. We used a simple UI to take input values from the measurement and then passed them as the Params in an AsyncTask. The processor intensive steps of data preparation, network layer building, model training, and evaluation of the user data were all performed in the doInBackground() method of the background thread, maintaining a stable and responsive device. Once completed, we passed the output INDArray to onPostExecute() where the the UI was updated to demonstrate the classification results. 
 The limitations of processing power and battery life of mobile devices make training robust, multi-layer networks somewhat unfeasible. To address this limitation, we will next look at an example Android application that saves the trained model on the device for faster performance after an initial training period.
-The complete repo for this example is available here: 
+
+The complete repo for this example is available here: https://github.com/jrmerwin/DL4JIrisClassifierDemo
 
 
 

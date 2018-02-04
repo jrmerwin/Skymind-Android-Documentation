@@ -47,7 +47,7 @@ packagingOptions {
 	exclude 'org/bytedeco/javacpp/windows-x86_64/msvcr120.dll'
         }
 ```
-Finally, compiling these dependencies involves a large number of files, thus it is necessary to set multiDexEnabled to true in defaultConfig.
+Compiling these dependencies involves a large number of files, thus it is necessary to set multiDexEnabled to true in defaultConfig.
 ```java
 multiDexEnabled true
 ```
@@ -60,7 +60,7 @@ compile 'com.google.code.findbugs:annotations:3.0.1', {
 }
 ```
 Finally, a conflict in the junit module versions will throw the following error: > Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ.
-This can be suppressed by focing all of the junit modules to use the same version
+This can be suppressed by focing all of the junit modules to use the same version.
 ```java
 configurations.all {
     resolutionStrategy.force 'junit:junit:4.12'

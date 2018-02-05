@@ -184,4 +184,8 @@ android:largeHeap="true"
 ```
 This section is under developement. Please check back later.
 ## <a name="head_link5">General Considerations</a>
-This section is under developement. Please check back later.
+While the above configurations help to mitigate the limitations of running DL4J neural networks on Android devices, practical considerations regarding performance limits are needed when building applications with neural networks. Training on a device is possible, but should only be attempted with smaller networks that can be successfully trained with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. Training on a device may be desirable if the neural network is being trained off user input data. The second demo application PreferencesLearnerDemo illustrates how a neural network can be trained on user provided information and then save the trained model as an app resource file for faster performance. 
+
+For larger or more complex neural networks like Convolutional or Reccurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. For these types of Android applications, the Neural Network can be build and trained on your desktop and then loaded as a pre-trained model in the application. A third demo application which illstrates this approach is currently under development and will be linked here when finished.
+
+Sections adapted from [Progur](https://github.com/jrmerwin/DL4JIrisClassifierDemo) 

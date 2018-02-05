@@ -1,4 +1,6 @@
-# Using Deeplearning4J in Android Applications
+# Using Deeplearning4J in Android Applications 
+### DL4JIrisClassifierDemo
+The example application trains a small neural network on the device using Anderson’s Iris data set for iris flower type classification. For a more indepth look at optimizing android for DL4J, please see the Prerequisits and Configuration documentation [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Introduction%20and%20Prerequisites.md). This application has a simple UI to take measurements of petal length, petal width, sepal length, and sepal width from the user and returns the probability that the measurements belong to one of three types of Iris (*Iris serosa*, *Iris versicolor*, and *Iris virginica*). A data set includes 150 measurement values (50 for each iris type) and training the model takes anywhere from 5-20 seconds, depending on the device.
 
 Contents
 
@@ -10,8 +12,6 @@ Contents
 * [Conclusion](#head_link6)
 
 ## DL4JIrisClassifierDemo
-The example application trains a small neural network on the device using Anderson’s Iris data set for iris flower type classification. For a more indepth look at optimizing android for DL4J, please see the Introduction and Prerequisits documentation [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Introduction%20and%20Prerequisites.md). This application has a simple UI to take measurements of petal length, petal width, sepal length, and sepal width from the user and returns the probability that the measurements belong to one of three types of Iris (*Iris serosa*, *Iris versicolor*, and *Iris virginica*). A data set includes 150 measurement values (50 for each iris type) and training the model takes anywhere from 5-20 seconds, depending on the device.
-
 ![](images/screen.PNG)
 ## <a name="head_link1">Setting the Dependencies</a>
 Deeplearning4J applications require several dependencies in the build.gradle file. The Deeplearning library in turn depends on the libraries of ND4J and OpenBLAS, thus these must also be added to the dependencies declaration. Starting with Android Studio 3.0, annotationProcessors need to be defined as well, thus dependencies for either -x86 or -arm processors should be included, depending on your device, if you are working in Android Studio 3.0 or later. Note that both can be include without conflict as is done in the example app.

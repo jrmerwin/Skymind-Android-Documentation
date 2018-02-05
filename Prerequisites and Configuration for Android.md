@@ -175,4 +175,6 @@ It may also be advantageous to increase the allocated memory to your app by addi
 ``` xml
 android:largeHeap="true"
 ```
+This section is under developement. Please check back later.
 ## General Considerations
+This section is under developement. Please check back later.

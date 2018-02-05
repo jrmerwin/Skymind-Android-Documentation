@@ -164,11 +164,15 @@ Proguard optimzes and reduces the amount of code in your Android application in 
 -keep public class * extends android.app.Fragment
 -keep public class com.android.vending.licensing.ILicensingService
 ```
-Testing your app is the best way to check if any errors are being caused by inappropriately removed code; however, you can also inspect what code was removed by reviewing the usage.txt output file saved in <module-name>/build/outputs/mapping/release/.
+Testing your app is the best way to check if any errors are being caused by inappropriately removed code; however, you can also inspect what was removed by reviewing the usage.txt output file saved in <module-name>/build/outputs/mapping/release/.
 
-To fix errors and force ProGuard to keep certain code, add a -keep line in the ProGuard configuration file. For example:
+To fix errors and force ProGuard to retain certain code, add a -keep line in the ProGuard configuration file. For example:
 ``` java
 -keep public class MyClass
 ```
 ## Memory Management
+It may also be advantageous to increase the allocated memory to your app by adding android:largeHeap="true" to the manifest file. Allocating a larger heap means that you decrease the risk of throwing an OutOfMemoryError during memory intensive operations. 
+``` xml
+android:largeHeap="true"
+```
 ## General Considerations

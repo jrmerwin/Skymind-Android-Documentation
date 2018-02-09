@@ -51,14 +51,7 @@ Compiling these dependencies involves a large number of files, thus it is necess
 ```java
 multiDexEnabled true
 ```
-Note that including multiDex will generate an 'Unable to merge dex' error which can be supressed with these additional exclusions added to the dependencies block
 
-```java
-compile 'com.google.code.findbugs:annotations:3.0.1', {
-    exclude module: 'jsr305'
-    exclude module: 'jcip-annotations'
-}
-```
 Finally, a conflict in the junit module versions will throw the following error: > Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ.
 This can be suppressed by focing all of the junit modules to use the same version.
 ```java

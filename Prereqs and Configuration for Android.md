@@ -179,10 +179,10 @@ android:largeHeap="true"
 Practical considerations regarding performance limits are needed when building applications with neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. Training on a device may be desirable if the neural network is being trained off user input data. 
 
 For larger or more complex neural networks like Convolutional or Reccurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. As an alternative, the Neural Network can be built and trained on the desktop and then loaded as a pre-trained model in the application. Using a pre-trained model in you Android application can be achieved with the following steps:
-	1. Train the yourModel on desktop and save via modelSerializer.
-	2. Create a raw resource folder in the res directory of the application.
-	3. Copy yourModel.zip file into the raw folder.
-	4. Access it from your resources using an inputStream like so:
+* Train the yourModel on desktop and save via modelSerializer.
+* Create a raw resource folder in the res directory of the application.
+* Copy yourModel.zip file into the raw folder.
+* Access it from your resources using an inputStream like so:
 ``` java
 try {
 // Load name of model file (yourModel.zip).

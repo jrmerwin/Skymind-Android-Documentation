@@ -4,7 +4,7 @@ Contents
 * [Required Dependencies](#head_link2)
 * [Managing Dependencies with ProGuard](#head_link3)
 * [Memory Management](#head_link4)
-* [General Considerations](#head_link5)
+* [Common Errors](#head_link5)
 
 While training neural networks is typically done on powerful computers running on multiple GPUs, the compatibility of Deeplearning4J with the Android platform makes using DL4J neural networks in android applications a possibility. This tutorial will cover the basics of seeting up android studio for building DL4J applications. Several configurations for dependencies, memory management, and compilation exculations needed to mitigate the limitatiosn of low powered modile device are outlined below. If you just want to get a DL4J app running on your device, you can jump ahead to a simple example application which trains a neural network for Iris flower classification is available example [here](https://github.com/jrmerwin/DL4JIrisClassifierDemo).
 ## <a name="head_link1">Prerequisites</a>
@@ -50,13 +50,6 @@ After addind the above dependencies and exclusions to the build.gradle file, try
 Compiling these dependencies involves a large number of files, thus it is necessary to set multiDexEnabled to true in defaultConfig.
 ```java
 multiDexEnabled true
-```
-Note that including multiDex will generate an 'Unable to merge dex' error which can be supressed with these additional exclusions added to the dependencies block.
-```java
-compile 'com.google.code.findbugs:annotations:3.0.1', {
-    exclude module: 'jsr305'
-    exclude module: 'jcip-annotations'
-}
 ```
 Finally, a conflict in the junit module versions will throw the following error: *> Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ*. This can be suppressed by forcing all of the junit modules to use the same version with the following:
 ``` java
@@ -182,10 +175,30 @@ It may also be advantageous to increase the allocated memory to your app by addi
 ``` xml
 android:largeHeap="true"
 ```
-This section is still under developement. Please check back later.
-## <a name="head_link5">General Considerations</a>
-While the above configurations help to mitigate the limitations of running DL4J neural networks on Android devices, practical considerations regarding performance limits are needed when building applications with neural networks. Training on a device is possible, but should only be attempted with smaller networks that can be successfully trained with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. Training on a device may be desirable if the neural network is being trained off user input data. The second demo application PreferencesLearnerDemo illustrates how a neural network can be trained on user provided information and then save the trained model as an app resource file for faster performance. 
+Practical considerations regarding performance limits are needed when building applications with neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. Training on a device may be desirable if the neural network is being trained off user input data. 
 
-For larger or more complex neural networks like Convolutional or Reccurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. For these types of Android applications, the Neural Network can be build and trained on your desktop and then loaded as a pre-trained model in the application. A third demo application which illstrates this approach is currently under development and will be linked here when finished.
+For larger or more complex neural networks like Convolutional or Reccurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. As an alternative, the Neural Network can be built and trained on the desktop and then loaded as a pre-trained model in the application. Using a pre-trained model in you Android application can be achieved with the following steps:
+	1. Train the yourModel on desktop and save via modelSerializer.
+	2. Create a raw resource folder in the res directory of the application.
+	3. Copy yourModel.zip file into the raw folder.
+	4. Access it from your resources using an inputStream like so:
+``` java
+try {
+// Load name of model file (yourModel.zip).
+        InputStream is = getResources().openRawResource(R.raw.yourModel);
+
+// Load yourModel.zip.
+        MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(is);
+// Use yourModel.
+        INDArray results = restored.output(input)
+        System.out.println("Results: "+ results );
+// Handle the exception error
+} catch(IOException e) {
+        e.printStackTrace();
+    }
+```
+
+## <a name="head_link5">Common Errors</a>
+
 
 Sections adapted from [Progur](https://github.com/jrmerwin/DL4JIrisClassifierDemo) 

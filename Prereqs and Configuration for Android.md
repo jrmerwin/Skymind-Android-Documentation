@@ -85,6 +85,7 @@ Proguard optimzes and reduces the amount of code in your Android application in 
 -optimizationpasses 5
 -allowaccessmodification
 -dontwarn org.apache.lang.**
+-ignorewarnings
 
 -keepattributes *Annotation*
 # JavaCV

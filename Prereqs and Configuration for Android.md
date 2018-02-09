@@ -4,7 +4,7 @@ Contents
 * [Required Dependencies](#head_link2)
 * [Managing Dependencies with ProGuard](#head_link3)
 * [Memory Management](#head_link4)
-* [Common Errors](#head_link5)
+
 
 While training neural networks is typically done on powerful computers running on multiple GPUs, the compatibility of Deeplearning4J with the Android platform makes using DL4J neural networks in android applications a possibility. This tutorial will cover the basics of seeting up android studio for building DL4J applications. Several configurations for dependencies, memory management, and compilation exculations needed to mitigate the limitatiosn of low powered modile device are outlined below. If you just want to get a DL4J app running on your device, you can jump ahead to a simple example application which trains a neural network for Iris flower classification is available example [here](https://github.com/jrmerwin/DL4JIrisClassifierDemo).
 ## <a name="head_link1">Prerequisites</a>
@@ -198,7 +198,6 @@ try {
     }
 ```
 
-## <a name="head_link5">Common Errors</a>
 
 
 Sections adapted from [Progur](https://github.com/jrmerwin/DL4JIrisClassifierDemo) 

@@ -4,7 +4,7 @@ Contents
 * [Required Dependencies](#head_link2)
 * [Managing Dependencies with ProGuard](#head_link3)
 * [Memory Management](#head_link4)
-
+* [Saving and Loading Networks on Android](#head_link5)
 
 While training neural networks is typically done on powerful computers running on multiple GPUs, the compatibility of Deeplearning4J with the Android platform makes using DL4J neural networks in android applications a possibility. This tutorial will cover the basics of seeting up android studio for building DL4J applications. Several configurations for dependencies, memory management, and compilation exculations needed to mitigate the limitatiosn of low powered modile device are outlined below. If you just want to get a DL4J app running on your device, you can jump ahead to a simple example application which trains a neural network for Iris flower classification is available example [here](https://github.com/jrmerwin/DL4JIrisClassifierDemo).
 ## <a name="head_link1">Prerequisites</a>
@@ -176,8 +176,75 @@ It may also be advantageous to increase the allocated memory to your app by addi
 ``` xml
 android:largeHeap="true"
 ```
-Practical considerations regarding performance limits are needed when building applications with neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. Training on a device may be desirable if the neural network is being trained off user input data. 
+This section is still under developement.
+## <a name="head_link5">Saving and Loading Networks on Android</a>
+Practical considerations regarding performance limits are needed when building applications with neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. 
 
+There is also the option of training on a device and saving the trained model on the phone's external storage. The trained model can then be used as an application resource after an initial training event. This approach is useful for training networks with data obtained from user input. The following code illustrates how to train a network and save it on the phone's external resources.
+
+For API 23 and greater, you will need to include the permissions in your manifest and also programmatically request the read and write permissions in your activity. The required Manifest persmissions are:
+``` xml
+<manifest>
+        <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        ...
+```
+You need to implement ActivityCompat.OnRequestPermissionsResultCallback in the activity and then check for permission status.
+``` java
+public class MainActivity extends AppCompatActivity
+        implements ActivityCompat.OnRequestPermissionsResultCallback {
+
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        verifyStoragePermission(MainActivity.this);
+	//…
+	}
+
+	public static void verifyStoragePermission(Activity activity) {
+	    // Get permission status
+	    int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+	    if (permission != PackageManager.PERMISSION_GRANTED) {
+	    // We don't have permission we request it
+	    ActivityCompat.requestPermissions(
+	                activity,
+	                PERMISSIONS_STORAGE,
+	                REQUEST_EXTERNAL_STORAGE
+	        );
+	    }
+	}
+```
+To save a network after training
+``` java 
+try {
+    File file = new File(Environment.getExternalStorageDirectory() + "/trained_model.zip");
+    OutputStream outputStream = new FileOutputStream(file);
+    boolean saveUpdater = true;
+    ModelSerializer.writeModel(myNetwork, outputStream, saveUpdater);
+
+} catch (Exception e) {
+    Log.e("saveToExternalStorage error", e.getMessage());
+}
+```
+To load the trained network from storage
+``` java 
+try{
+    //Load the model
+    File file = new File(Environment.getExternalStorageDirectory() + "/trained_model.zip");
+    MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(file);
+ 
+} catch (Exception e) {
+    Log.e("Load from External Storage error", e.getMessage());
+}
+```
 For larger or more complex neural networks like Convolutional or Reccurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. As an alternative, the Neural Network can be built and trained on the desktop and then loaded as a pre-trained model in the application. Using a pre-trained model in you Android application can be achieved with the following steps:
 * Train the yourModel on desktop and save via modelSerializer.
 * Create a raw resource folder in the res directory of the application.
@@ -190,6 +257,7 @@ try {
 
 // Load yourModel.zip.
         MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(is);
+        
 // Use yourModel.
         INDArray results = restored.output(input)
         System.out.println("Results: "+ results );

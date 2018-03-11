@@ -176,7 +176,7 @@ It may also be advantageous to increase the allocated memory to your app by addi
 ``` xml
 android:largeHeap="true"
 ```
-This section is still under developement.
+
 ## <a name="head_link5">Saving and Loading Networks on Android</a>
 Practical considerations regarding performance limits are needed when building applications with neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. 
 

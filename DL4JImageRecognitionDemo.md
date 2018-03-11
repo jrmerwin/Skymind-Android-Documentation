@@ -10,7 +10,7 @@ Contents
 * [Conclusion](#head_link6)
 
 ## DL4JImageRecognitionDemo
-This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 1..9. The application UI allows the user to draw a number which is then tested against the trained netowrk. The output displays the most probably numeric values and the probability score. This tutorial will cover the use of the trained neural network in Android studio, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating the training and saving of the neural network used in this application, please see this [tutorial](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). More information on prerequisits for building DL4J Android Applications can be found [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). 
+This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 1..9. The application UI allows the user to draw a number which is then tested against the trained netowrk. The output displays the most probably numeric values and the probability score. This tutorial will cover the use of the trained neural network in Android studio, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating how to train and saving neural networks used in this application, please see this [tutorial](https://deeplearning4j.org/quickstart). More information on prerequisits for building DL4J Android Applications can be found [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). 
 
 ![](images/screen2.png)
 ## <a name="head_link1">Setting the Dependencies</a>
@@ -70,8 +70,8 @@ configurations.all {
 
 Using a nerual network requires a significant amount of processor power, which is in limited supply on mobile devices. Thus, a background thread be used for loading of the trained neural network and the testing of the user drawn image using AsyncTask. In this application we will run image drawing code on the main thread and an AsyncTask to load the drawn image from internal memory and test it against the trained model. First, lets look at how to save the trained neural network we will be using in the application. 
 
-You will need to begin by following this [tutorial](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6) to set up the Mnist demo on your desktop. The  
-
+You will need to begin by following the DeepLearning4J quick start [guide](https://deeplearning4j.org/quickstart) to set up and train and save neural network models on a desktop computer [tutorial]. The DL4J example which trains and saves the Mnist model used in this application is *MnistImagePipelineExampleSave.java* and is included in the quick start guide referenced above. The code for the Mnist demo is also available [here](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). Running this demo will train the Mnist neural network model and save it as "trained_mnist_model.zip" in the *dl4j\target folder* of the *dl4j-examples* directory. Copy the file and save it in the raw folder of your project in android studio. 
+![](images/rawFolder.PNG)
 
 
 First, lets get references to the editTexts in the UI layout that accept the iris measurements inside of our onCreate method. Then an onClickListener will execute our asyncTask, pass it the measurements entered by the user, and show a progress bar until we hide it again in onPostExecute().

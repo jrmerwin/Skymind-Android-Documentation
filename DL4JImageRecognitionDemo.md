@@ -10,11 +10,11 @@ Contents
 * [Conclusion](#head_link6)
 
 ## DL4JImageRecognitionDemo
-This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 1..9. The application UI allows the user to draw a number which is then tested against the trained netowrk. The output displays the most probably numeric values and the probability score. This tutorial will cover the use of the trained neural network in Android studio, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating the training and saving of the neural network used in this application, please see this [tutorial](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). More information on prerequisits for building DL4J Android Applications can be found [here](). 
+This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 1..9. The application UI allows the user to draw a number which is then tested against the trained netowrk. The output displays the most probably numeric values and the probability score. This tutorial will cover the use of the trained neural network in Android studio, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating the training and saving of the neural network used in this application, please see this [tutorial](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). More information on prerequisits for building DL4J Android Applications can be found [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). 
 
 ![](images/screen2.png)
 ## <a name="head_link1">Setting the Dependencies</a>
-Deeplearning4J applications require several dependencies in the build.gradle file. The Deeplearning library in turn depends on the libraries of ND4J and OpenBLAS, thus these must also be added to the dependencies declaration. Starting with Android Studio 3.0, annotationProcessors need to be defined as well, thus dependencies for either -x86 or -arm processors should be included, depending on your device, if you are working in Android Studio 3.0 or later. Note that both can be include without conflict as is done in the example app.
+Deeplearning4J applications requires application specific dependencies in the build.gradle file. The Deeplearning library in turn depends on the libraries of ND4J and OpenBLAS, thus these must also be added to the dependencies declaration. Starting with Android Studio 3.0, annotationProcessors need to be defined as well, thus dependencies for either -x86 or -arm processors should be included, depending on your device, if you are working in Android Studio 3.0 or later. Note that both can be include without conflict as is done in the example app.
 ```java
 	compile 'com.android.support:appcompat-v7:27.0.2'
         compile 'com.android.support:design:27.0.2'
@@ -27,7 +27,7 @@ Deeplearning4J applications require several dependencies in the build.gradle fil
         compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-arm'
         testCompile 'junit:junit:4.12'
 ```
-Some conflicts exist within these dependencies that must be handled in the build.gradle file. The DL4J and ND4J libraries have several identically named files in them which requires exclusion parameters in the packagingOptions. After added the above dependencies to the build.gradle file, try syncing Gradle with the below exclusions and add additional exclusions if needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: **> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'**
+Depending on the combination of dependencies, some duplication conflicts will arise that must be excluded. After adding the above dependencies and the exclusions listed below, sync the Gradle add additional exclusions if needed to suppress any errors which arise. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: **> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'**
 ```java
 packagingOptions {
  
@@ -51,7 +51,7 @@ Compiling these dependencies involves a large number of files, thus it is necess
 ```java
 multiDexEnabled true
 ```
-Note that including multiDex will generate an 'Unable to merge dex' error which can be supressed with these additional exclusions added to the dependencies block
+Including multiDex will generate an 'Unable to merge dex' error which can be supressed with these additional exclusions added to the dependencies block
 
 ```java
 compile 'com.google.code.findbugs:annotations:3.0.1', {
@@ -59,7 +59,7 @@ compile 'com.google.code.findbugs:annotations:3.0.1', {
     exclude module: 'jcip-annotations'
 }
 ```
-Finally, a conflict in the junit module versions will throw the following error: > Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ.
+Finally, a conflict in the junit module versions will give the following error: > Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ.
 This can be suppressed by focing all of the junit modules to use the same version.
 ```java
 configurations.all {

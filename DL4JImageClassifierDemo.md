@@ -12,7 +12,7 @@ Contents
 ## DL4JImageRecognitionDemo
 This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 1..9. The application UI allows the user to draw a number which is then tested against the trained netowrk. The output displays the most probably numeric values and the probability score. This tutorial will cover the use of the trained neural network in Android studio, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating the training and saving of the neural network used in this application, please see this [tutorial](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). For more information on prerequisits for building DL4J Android Applications, please see the [tutorial](). 
 
-![](images/screen.PNG)
+![](images/screen2.PNG)
 ## <a name="head_link1">Setting the Dependencies</a>
 Deeplearning4J applications require several dependencies in the build.gradle file. The Deeplearning library in turn depends on the libraries of ND4J and OpenBLAS, thus these must also be added to the dependencies declaration. Starting with Android Studio 3.0, annotationProcessors need to be defined as well, thus dependencies for either -x86 or -arm processors should be included, depending on your device, if you are working in Android Studio 3.0 or later. Note that both can be include without conflict as is done in the example app.
 ```java

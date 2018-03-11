@@ -332,47 +332,15 @@ public class MainActivity extends AppCompatActivity {
 
 ## <a name="head_link5">Updating the UI</a>
 
-Now lets complete our AsyncTask by overriding the onPrgress and onPostExecute methods. Once the doInBackground method of AsyncTask completes the classification results will be passed to the onPostExecute which has access to the main thread and UI, allowing us to update the UI with the results. The INDarry which was contains the results is a 1x10 array with probability values for each possible digit (0..9). From this we need to find out which row of the array contains the largest value and what the size of that value is. These two values will determine which number the neural network has classified the drawing as and how confident the network score is. These will be refered to in the UI as *Prediction* and the *Confidence*, respectively. We also need to write code for the onProgress method of the AsyncTask; however, since we will not be using this method a call to its superclass will suffice. Note that the decimal places reported on the probabilities can be controlled by setting a DecimalFormat pattern, as shown below.
+Now lets complete our AsyncTask by overriding the onPrgress and onPostExecute methods. Once the doInBackground method of AsyncTask completes the classification results will be passed to the onPostExecute which has access to the main thread and UI, allowing us to update the UI with the results. We also need to write code for the onProgress method of the AsyncTask; however, since we will not be using this method a call to its superclass will suffice. 
 ```java
 @Override
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
-        }
-
-
-        @Override
-        protected void onPostExecute(INDArray result) {
-            super.onPostExecute(result);
-
-            //used to control the number of decimals places for the output probability
-            DecimalFormat df2 = new DecimalFormat(".##");
-
-            //transfer the neural network output to an array
-            double[] results = {result.getDouble(0,0),result.getDouble(0,1),result.getDouble(0,2),
-                    result.getDouble(0,3),result.getDouble(0,4),result.getDouble(0,5),result.getDouble(0,6),
-                    result.getDouble(0,7),result.getDouble(0,8),result.getDouble(0,9),};
-
-            //find the UI tvs to display the prediction and confidence values
-            TextView out1 = findViewById(R.id.prediction);
-            TextView out2 = findViewById(R.id.confidence);
-
-            //display the values using helper functions defined below
-            out2.setText(String.valueOf(df2.format(arrayMaximum(results))));
-            out1.setText(String.valueOf(getIndexOfLargestValue(results)));
-
-            //helper function to turn off progress test
-            offProgressBar();
         }
 ```
-
-
-
+The onPostExecute method will recieve the INDArry which contains the nerual network results as a 1x10 array with probability values that the input drawing was each possible digit (0..9). From this we need to find out which row of the array contains the largest value and what the size of that value is. These two values will determine which number the neural network has classified the drawing as and how confident the network score is. These values will be refered to in the UI as *Prediction* and the *Confidence*, respectively. In the code below, the individual values for each position of the INDArray is passed to an array of type double using getDouble() on the result IDArray. We then get references to the TextViews we will update in the UI and call our helper methods on the array to return the array maximum (confidence) and index of the largest value (predicition). Note we also need to limit the number of decimal places reported on the probabilities by setting a DecimalFormat pattern.
 ```java
-@Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-        }
-
 
         @Override
         protected void onPostExecute(INDArray result) {
@@ -401,10 +369,9 @@ Now lets complete our AsyncTask by overriding the onPrgress and onPostExecute me
 
 ## <a name="head_link6">Conclusion</a>
 
-Hopefully this tutorial has illustrated how the compatibility of DL4J with Android makes it easy to build, train, and evaluate neural networks on mobile devices. We used a simple UI to take input values from the measurement and then passed them as the *Params* in an AsyncTask. The processor intensive steps of data preparation, network layer building, model training, and evaluation of the user data were all performed in the doInBackground() method of the background thread, maintaining a stable and responsive device. Once completed, we passed the output INDArray as the AsyncTask *Results* to onPostExecute() where the the UI was updated to demonstrate the classification results. 
-The limitations of processing power and battery life of mobile devices make training robust, multi-layer networks somewhat unfeasible. To address this limitation, we will next look at an example Android application that saves the trained model on the device for faster performance after an initial model training.
+This tutorial provides the framework for image recognition in an Android Application using DL4J. It illustrates how to load a pre-trained DL4J model from the raw resources file and how to test user generate input images against the model. The AsyncTask then returns the output to the mainthread and updates the UI. 
 
-The complete repo for this example is available here: https://github.com/jrmerwin/DL4JIrisClassifierDemo
+The complete repo for this example is available [here.](https://github.com/jrmerwin/DL4JImageRecognitionDemo)
 
 
 

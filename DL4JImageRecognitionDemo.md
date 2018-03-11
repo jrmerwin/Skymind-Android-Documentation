@@ -128,8 +128,189 @@ private class AsyncTaskRunner extends AsyncTask<String, Integer, INDArray> {
 
 ## <a name="head_link3">Handling images from user input</a>
  
- Now lets add the code for the draw canvas that will run on the main thread and allow the user to draw a number on the screen. 
- 
+Now lets add the code for the draw canvas that will run on the main thread and allow the user to draw a number on the screen. This is a generic draw program written as an inner class within the MainActivity. It extends View and overrides a series of relevant methods. The saving of the drawing to internal memory and launching of the AsyncTask with the Path to that image are executed in the onTouchEvent case statment for case *MotionEvent.ACTION_UP*. This has the streamline action of automatically returning results for an image after the user completes the drawing. 
+```java
+//code for the drawing input
+    public class DrawingView extends View {
+
+        private Path    mPath;
+        private Paint   mBitmapPaint;
+        private Paint   mPaint;
+        private Bitmap  mBitmap;
+        private Canvas  mCanvas;
+
+        public DrawingView(Context c) {
+            super(c);
+
+            mPath = new Path();
+            mBitmapPaint = new Paint(Paint.DITHER_FLAG);
+            mPaint = new Paint();
+            mPaint.setAntiAlias(true);
+            mPaint.setStrokeJoin(Paint.Join.ROUND);
+            mPaint.setStrokeCap(Paint.Cap.ROUND);
+            mPaint.setStrokeWidth(60);
+            mPaint.setDither(true);
+            mPaint.setColor(Color.WHITE);
+            mPaint.setStyle(Paint.Style.STROKE);
+        }
+
+        @Override
+        protected void onSizeChanged(int W, int H, int oldW, int oldH) {
+            super.onSizeChanged(W, H, oldW, oldH);
+            mBitmap = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_4444);
+            mCanvas = new Canvas(mBitmap);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            canvas.drawBitmap(mBitmap, 0, 0, mBitmapPaint);
+            canvas.drawPath(mPath, mPaint);
+        }
+
+        private float mX, mY;
+        private static final float TOUCH_TOLERANCE = 4;
+
+        private void touch_start(float x, float y) {
+            mPath.reset();
+            mPath.moveTo(x, y);
+            mX = x;
+            mY = y;
+        }
+        private void touch_move(float x, float y) {
+            float dx = Math.abs(x - mX);
+            float dy = Math.abs(y - mY);
+            if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
+                mPath.quadTo(mX, mY, (x + mX)/2, (y + mY)/2);
+                mX = x;
+                mY = y;
+            }
+        }
+        private void touch_up() {
+            mPath.lineTo(mX, mY);
+            mCanvas.drawPath(mPath, mPaint);
+            mPath.reset();
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            float x = event.getX();
+            float y = event.getY();
+
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    invalidate();
+                    clear();
+                    touch_start(x, y);
+                    invalidate();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    touch_move(x, y);
+                    invalidate();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    touch_up();
+                    absolutePath = saveDrawing();
+                    invalidate();
+                    clear();
+                    loadImageFromStorage(absolutePath);
+                    onProgressBar();
+                    //launch the asyncTask now that the image has been saved
+                    AsyncTaskRunner runner = new AsyncTaskRunner();
+                    runner.execute(absolutePath);
+                    break;
+
+            }
+            return true;
+        }
+
+        public void clear(){
+            mBitmap.eraseColor(Color.TRANSPARENT);
+            invalidate();
+            System.gc();
+        }
+
+    }
+
+```
+Now lets build a series of helper methods that save the image, load the image, and handle the progress message. First we will write the saveDrawing() method. It uses getDrawingCache() to retrieve the drawing from the drawingView and store it as a bitmap. We then create a file directory and file for the bitmap called "drawn_image.jpg". Finally, we use FileOutputStream and a try / catch block to write the bitmap to the file location. The method returns the absolutPath to the file location which will be used by the loadImageFromStorage()  method. 
+```java
+public String saveDrawing(){
+        drawingView.setDrawingCacheEnabled(true);
+        Bitmap b = drawingView.getDrawingCache();
+
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        // set the path to storage
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        // Create imageDir and store the file there. Each new drawing will overwrite the previous
+        File mypath=new File(directory,"drawn_image.jpg");
+
+        //use a fileOutputStream to write the file to the location in a try / catch block
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mypath);
+            b.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return directory.getAbsolutePath();
+    }
+```
+Next we will write the loadImageFromStorage method which will use the absolute path returned from saveDrawing() to load the saved image and display it in the UI as part of the outut display. It uses a try / catch block use a FileInputStream to set the image to the ImageView img in the UI layout.
+```java
+    private void loadImageFromStorage(String path)
+    {
+
+        //use a fileInputStream to read the file in a try / catch block
+        try {
+            File f=new File(path, "drawn_image.jpg");
+            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+            ImageView img=(ImageView)findViewById(R.id.outputView);
+            img.setImageBitmap(b);
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+
+    }
+```
+Finally, lets write a few methods we can call to show and hide an 'In Progress...' message while the background thread is running. These will be called when the AsyncTask is executed and in the onPostExecute method when the background thread completes.
+```java
+    public void onProgressBar(){
+        TextView bar = findViewById(R.id.processing);
+        bar.setVisibility(View.VISIBLE);
+    }
+
+    public void offProgressBar(){
+        TextView bar = findViewById(R.id.processing);
+        bar.setVisibility(View.INVISIBLE);
+    }
+```
+Now lets go to the onCreate method to initialize the draw canvas and set some global variables as well.
+```java
+public class MainActivity extends AppCompatActivity {
+
+    MainActivity.DrawingView drawingView;
+    String absolutePath;
+    public static INDArray output;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        RelativeLayout parent = findViewById(R.id.layout2);
+        drawingView = new MainActivity.DrawingView(this);
+        parent.addView(drawingView);
+    }
+```
+
 
 ## <a name="head_link4">Testing the image</a>
 

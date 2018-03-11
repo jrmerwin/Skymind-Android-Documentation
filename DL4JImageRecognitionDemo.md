@@ -3,16 +3,16 @@
 Contents
 
 * [Setting the Dependencies](#head_link1)
-* [Setting up the neural network on a background thread](#head_link2)
-* [Preparing the training data set and user input](#head_link3)
-* [Building and Training the Neural Network](#head_link4)
+* [Accessing the neural network on a background thread](#head_link2)
+* [Handling images from user input](#head_link3)
+* [Testing the image](#head_link4)
 * [Updating the UI](#head_link5)
 * [Conclusion](#head_link6)
 
 ## DL4JImageRecognitionDemo
-This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 1..9. The application UI allows the user to draw a number which is then tested against the trained netowrk. The output displays the most probably numeric values and the probability score. This tutorial will cover the use of the trained neural network in Android studio, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating the training and saving of the neural network used in this application, please see this [tutorial](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). For more information on prerequisits for building DL4J Android Applications, please see the [tutorial](). 
+This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 1..9. The application UI allows the user to draw a number which is then tested against the trained netowrk. The output displays the most probably numeric values and the probability score. This tutorial will cover the use of the trained neural network in Android studio, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating the training and saving of the neural network used in this application, please see this [tutorial](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). More information on prerequisits for building DL4J Android Applications can be found [here](). 
 
-![](images/screen2.jpg)
+![](images/screen2.png)
 ## <a name="head_link1">Setting the Dependencies</a>
 Deeplearning4J applications require several dependencies in the build.gradle file. The Deeplearning library in turn depends on the libraries of ND4J and OpenBLAS, thus these must also be added to the dependencies declaration. Starting with Android Studio 3.0, annotationProcessors need to be defined as well, thus dependencies for either -x86 or -arm processors should be included, depending on your device, if you are working in Android Studio 3.0 or later. Note that both can be include without conflict as is done in the example app.
 ```java
@@ -66,7 +66,7 @@ configurations.all {
     resolutionStrategy.force 'junit:junit:4.12'
 }
 ```
-## <a name="head_link2">Setting up the neural network on a background thread</a>
+## <a name="head_link2">Accessing the neural network on a background thread</a>
 
 Training even a simple neural network like in this example requires a significant amount of processor power, which is in limited supply on mobile devices. Thus, it is imperative that a background thread be used for the building and training of the neural network which then returns the output to the main thread for updating the UI. In this example we will be using an AsyncTask which accepts the input measurements from the UI and passes them as type double to the doInBackground() method. First, lets get references to the editTexts in the UI layout that accept the iris measurements inside of our onCreate method. Then an onClickListener will execute our asyncTask, pass it the measurements entered by the user, and show a progress bar until we hide it again in onPostExecute().
 ```java
@@ -120,7 +120,7 @@ private class AsyncTaskRunner extends AsyncTask<Double, Integer, INDArray> {
             bar.setVisibility(View.INVISIBLE);
         }
 ```
-## <a name="head_link3">Preparing the training data set and user input</a>
+## <a name="head_link3">Handling images from user input</a>
 
 The doInBackground() method will handle the formatting of the training data, the construction of the neural net, the training of the net, and the analysis of the input data by the trained model. The user input has only 4 values, thus we can add those directly to a 1x4 INDArray using the putScalar() method. The training data is much larger and must be converted from CSV lists to matrices through an iterative *for* loop. 
  
@@ -168,7 +168,7 @@ The training data is stored in the app as two arrays, one for the Iris measureme
             INDArray trainingIn = Nd4j.create(irisMatrix);
             INDArray trainingOut = Nd4j.create(twodimLabel);
 ```
-## <a name="head_link4">Building and Training the Neural Network</a>
+## <a name="head_link4">Testing the image</a>
 
 Now that our data is ready, we can build a simple multi-layer perceptron with a single hidden layer. The *DenseLayer* class is used to create the input layer and the hidden layer of the network while the *OutputLayer* class is used for the Output layer. The number of columns in the input INDArray must equal to the number of neurons in the input layer (nIn). The number of neurons in the hidden layer input must equal the number inputLayer’s output array (nOut). Finally, the outputLayer input should match the hiddenLayer output. The output must equal the number of possible classifications, which is 3.
 ```java

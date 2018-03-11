@@ -6,7 +6,6 @@ Contents
 * [Training and loading the Mnist model in the Android project resources](#head_link2)
 * [Accessing the trained model using an AsyncTask](#head_link7)
 * [Handling images from user input](#head_link3)
-* [Testing the image](#head_link4)
 * [Updating the UI](#head_link5)
 * [Conclusion](#head_link6)
 
@@ -280,7 +279,27 @@ Next we will write the loadImageFromStorage method which will use the absolute p
 
     }
 ```
-Finally, lets write a few methods we can call to show and hide an 'In Progress...' message while the background thread is running. These will be called when the AsyncTask is executed and in the onPostExecute method when the background thread completes.
+We also need to write two methods that extract the predicted number from the neural network output and the confidence score, which we will call later when we complete the AsyncTask. 
+```java
+//helper class to return the largest value in the output array
+    public static double arrayMaximum(double[] arr) {
+        double max = Double.NEGATIVE_INFINITY;
+        for(double cur: arr)
+            max = Math.max(max, cur);
+        return max;
+    }
+
+    // helper class to find the index (and therefore numerical value) of the largest confidence score
+    public int getIndexOfLargestValue( double[] array )
+    {
+        if ( array == null || array.length == 0 ) return -1;
+        int largest = 0;
+        for ( int i = 1; i < array.length; i++ )
+        {if ( array[i] > array[largest] ) largest = i;            }
+        return largest;
+    }
+```
+Finally, we need a few methods we can call to show and hide an 'In Progress...' message while the background thread is running. These will be called when the AsyncTask is executed and in the onPostExecute method when the background thread completes.
 ```java
     public void onProgressBar(){
         TextView bar = findViewById(R.id.processing);
@@ -311,97 +330,72 @@ public class MainActivity extends AppCompatActivity {
     }
 ```
 
-
-## <a name="head_link4">Testing the image</a>
-
-Now that our data is ready, we can build a simple multi-layer perceptron with a single hidden layer. The *DenseLayer* class is used to create the input layer and the hidden layer of the network while the *OutputLayer* class is used for the Output layer. The number of columns in the input INDArray must equal to the number of neurons in the input layer (nIn). The number of neurons in the hidden layer input must equal the number inputLayer’s output array (nOut). Finally, the outputLayer input should match the hiddenLayer output. The output must equal the number of possible classifications, which is 3.
-```java
-//define the layers of the network
-        DenseLayer inputLayer = new DenseLayer.Builder()
-                .nIn(4)
-                .nOut(3)
-                .name("Input")
-                .build();
- 
-        DenseLayer hiddenLayer = new DenseLayer.Builder()
-                .nIn(3)
-                .nOut(3)
-                .name("Hidden")
-                .build();
- 
-        OutputLayer outputLayer = new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                .nIn(3)
-                .nOut(3)
-                .name("Output")
-                .activation(Activation.SOFTMAX)
-                .build();
-```
-The next step is to build the neural network using *nccBuilder*. The parameters selected below for training are standard. To learn more about optimizing network training, see deeplearning4j.org.
-```java
-        NeuralNetConfiguration.Builder nncBuilder = new NeuralNetConfiguration.Builder();
-        long seed = 6;
-        nncBuilder.seed(seed);
-        nncBuilder.iterations(1000);
-        nncBuilder.learningRate(0.1);
-        nncBuilder.activation(Activation.TANH);
-        nncBuilder.weightInit(WeightInit.XAVIER);
-        nncBuilder.regularization(true).l2(1e-4);
- 
-        NeuralNetConfiguration.ListBuilder listBuilder = nncBuilder.list();
-        listBuilder.layer(0, inputLayer);
-        listBuilder.layer(1, hiddenLayer);
-        listBuilder.layer(2, outputLayer);
- 
-        listBuilder.backprop(true);
- 
-        MultiLayerNetwork myNetwork = new MultiLayerNetwork(listBuilder.build());
-        myNetwork.init();
- 
-	  //Create a data set from the INDArrays and train the network
-        DataSet myData = new DataSet(trainingIn, trainingOut);
-        myNetwork.fit(myData);
- 
-	  //Evaluate the input data against the model
-        INDArray actualOutput = myNetwork.output(actualInput);
-        Log.d("myNetwork Output ", actualOutput.toString());
- 
-	  //Here we return the INDArray to onPostExecute where it can be 
-	  //used to update the UI
-        return actualOutput;
-        }
-       }
-```
 ## <a name="head_link5">Updating the UI</a>
 
-Once the training of the neural network and the classification of the user measurements are complete, the doInBackground() method will finish and onPostExecute() will have access to the main thread and UI, allowing us to update the UI with the classification results. Note that the decimal places reported on the probabilities can be controlled by setting a DecimalFormat pattern.
+Now lets complete our AsyncTask by overriding the onPrgress and onPostExecute methods. Once the doInBackground method of AsyncTask completes the classification results will be passed to the onPostExecute which has access to the main thread and UI, allowing us to update the UI with the results. The INDarry which was contains the results is a 1x10 array with probability values for each possible digit (0..9). From this we need to find out which row of the array contains the largest value and what the size of that value is. These two values will determine which number the neural network has classified the drawing as and how confident the network score is. These will be refered to in the UI as *Prediction* and the *Confidence*, respectively. We also need to write code for the onProgress method of the AsyncTask; however, since we will not be using this method a call to its superclass will suffice. Note that the decimal places reported on the probabilities can be controlled by setting a DecimalFormat pattern, as shown below.
 ```java
-//This is where we update the UI with our classification results
+@Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+
+
         @Override
         protected void onPostExecute(INDArray result) {
             super.onPostExecute(result);
- 
-        //Hide the progress bar now that we are finished
-        ProgressBar bar = (ProgressBar) findViewById(R.id.progressBar);
-        bar.setVisibility(View.INVISIBLE);
- 
-        //Retrieve the three probabilities
-        Double first = result.getDouble(0,0);
-        Double second = result.getDouble(0,1);
-        Double third = result.getDouble(0,2);
- 
-        //Update the UI with output
-        TextView setosa = (TextView) findViewById(R.id.textView11);
-        TextView versicolor = (TextView) findViewById(R.id.textView12);
-        TextView virginica = (TextView) findViewById(R.id.textView13);
- 
-        //Limit the double to values to two decimals using DecimalFormat
-        DecimalFormat df2 = new DecimalFormat(".##");
- 
-        //Set the text of the textViews in UI to show the probabilites
-        setosa.setText(String.valueOf(df2.format(first)));
-        versicolor.setText(String.valueOf(df2.format(second)));
-        virginica.setText(String.valueOf(df2.format(third)));
- 
+
+            //used to control the number of decimals places for the output probability
+            DecimalFormat df2 = new DecimalFormat(".##");
+
+            //transfer the neural network output to an array
+            double[] results = {result.getDouble(0,0),result.getDouble(0,1),result.getDouble(0,2),
+                    result.getDouble(0,3),result.getDouble(0,4),result.getDouble(0,5),result.getDouble(0,6),
+                    result.getDouble(0,7),result.getDouble(0,8),result.getDouble(0,9),};
+
+            //find the UI tvs to display the prediction and confidence values
+            TextView out1 = findViewById(R.id.prediction);
+            TextView out2 = findViewById(R.id.confidence);
+
+            //display the values using helper functions defined below
+            out2.setText(String.valueOf(df2.format(arrayMaximum(results))));
+            out1.setText(String.valueOf(getIndexOfLargestValue(results)));
+
+            //helper function to turn off progress test
+            offProgressBar();
+        }
+```
+
+
+
+```java
+@Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+
+
+        @Override
+        protected void onPostExecute(INDArray result) {
+            super.onPostExecute(result);
+
+            //used to control the number of decimals places for the output probability
+            DecimalFormat df2 = new DecimalFormat(".##");
+
+            //transfer the neural network output to an array
+            double[] results = {result.getDouble(0,0),result.getDouble(0,1),result.getDouble(0,2),
+                    result.getDouble(0,3),result.getDouble(0,4),result.getDouble(0,5),result.getDouble(0,6),
+                    result.getDouble(0,7),result.getDouble(0,8),result.getDouble(0,9),};
+
+            //find the UI tvs to display the prediction and confidence values
+            TextView out1 = findViewById(R.id.prediction);
+            TextView out2 = findViewById(R.id.confidence);
+
+            //display the values using helper functions defined below
+            out2.setText(String.valueOf(df2.format(arrayMaximum(results))));
+            out1.setText(String.valueOf(getIndexOfLargestValue(results)));
+
+            //helper function to turn off progress test
+            offProgressBar();
         }
 ```
 

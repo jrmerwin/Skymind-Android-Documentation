@@ -3,7 +3,8 @@
 Contents
 
 * [Setting the Dependencies](#head_link1)
-* [Accessing the neural network on a background thread](#head_link2)
+* [Training and loading the Mnist model in the Android project resources](#head_link2)
+* [Accessing the trained model using an AsyncTask](#head_link7)
 * [Handling images from user input](#head_link3)
 * [Testing the image](#head_link4)
 * [Updating the UI](#head_link5)
@@ -66,114 +67,70 @@ configurations.all {
     resolutionStrategy.force 'junit:junit:4.12'
 }
 ```
-## <a name="head_link2">Accessing the neural network on a background thread</a>
+## <a name="head_link2">Training and loading the Mnist model in the Android project resources</a>
 
 Using a nerual network requires a significant amount of processor power, which is in limited supply on mobile devices. Thus, a background thread be used for loading of the trained neural network and the testing of the user drawn image using AsyncTask. In this application we will run image drawing code on the main thread and an AsyncTask to load the drawn image from internal memory and test it against the trained model. First, lets look at how to save the trained neural network we will be using in the application. 
 
-You will need to begin by following the DeepLearning4J quick start [guide](https://deeplearning4j.org/quickstart) to set up and train and save neural network models on a desktop computer [tutorial]. The DL4J example which trains and saves the Mnist model used in this application is *MnistImagePipelineExampleSave.java* and is included in the quick start guide referenced above. The code for the Mnist demo is also available [here](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). Running this demo will train the Mnist neural network model and save it as "trained_mnist_model.zip" in the *dl4j\target folder* of the *dl4j-examples* directory. Copy the file and save it in the raw folder of your project in android studio. 
+You will need to begin by following the DeepLearning4J quick start [guide](https://deeplearning4j.org/quickstart) to set up, train, and save neural network models on a desktop computer. The DL4J example which trains and saves the Mnist model used in this application is *MnistImagePipelineExampleSave.java* and is included in the quick start guide referenced above. The code for the Mnist demo is also available [here](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). Running this demo will train the Mnist neural network model and save it as "trained_mnist_model.zip" in the *dl4j\target folder* of the *dl4j-examples* directory. Copy the file and save it in the raw folder of your project in android studio. 
+
 ![](images/rawFolder.PNG)
 
+## <a name="head_link7">Accessing the trained model using an AsyncTask</a>
 
-First, lets get references to the editTexts in the UI layout that accept the iris measurements inside of our onCreate method. Then an onClickListener will execute our asyncTask, pass it the measurements entered by the user, and show a progress bar until we hide it again in onPostExecute().
+Now let’s start by writing our AsyncTask<*Params*, *Progress*, *Results*> to run the neural network on a background thread. The AsyncTask will use the parameter types <String, Integer, INDArray>. The *Params* type is set to String, which will pass the Path to the saved image to the asyncTask as it is executed. This path will be used in the doInBackground() method to locate and load the trained Mnist model. The *Results* parameter is of type INDArray which will store the results from the neural network and pass it to the onPostExecute method that has access to the main thread for updating the UI. For more on NDArrays, see https://nd4j.org/userguide. 
 ```java
-public class MainActivity extends AppCompatActivity {
- 
- 
-@Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
- 
-        //get references to the editTexts that take the measurements
-        final EditText PL = (EditText) findViewById(R.id.editText);
-        final EditText PW = (EditText) findViewById(R.id.editText2);
-        final EditText SL = (EditText) findViewById(R.id.editText3);
-        final EditText SW = (EditText) findViewById(R.id.editText4);
- 
-	  //onclick to capture the input and launch the asyncTask
-        Button button = (Button) findViewById(R.id.button);
- 
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
- 
-                final double pl = Double.parseDouble(PL.getText().toString());
-                final double pw = Double.parseDouble(PW.getText().toString());
-                final double sl = Double.parseDouble(SL.getText().toString());
-                final double sw = Double.parseDouble(SW.getText().toString());
- 
-                AsyncTaskRunner runner = new AsyncTaskRunner();
- 
-		   //pass the measurement as params to the AsyncTask
-                runner.execute(pl,pw,sl,sw);
- 
-                ProgressBar bar = (ProgressBar) findViewById(R.id.progressBar);
-                bar.setVisibility(View.VISIBLE);
-            }
-        });
-        }
-```
-Now let’s write our AsyncTask<*Params*, *Progress*, *Results*>. The AsyncTask needs to have a *Params* of type Double to receive the decimal value measurements from the UI. The *Result* type is set to INDArray, which is returned from the doInBackground() Method and passed to the onPostExecute() method for updating the UI. NDArrays are provided by the ND4J library and are essentially n-dimensional arrays with a given number of dimensions. For more on NDArrays, see https://nd4j.org/userguide. 
-```java
-private class AsyncTaskRunner extends AsyncTask<Double, Integer, INDArray> {
- 
-        // Runs in UI before background thread is called
+private class AsyncTaskRunner extends AsyncTask<String, Integer, INDArray> {
+
+        // Runs in UI before background thread is called. 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
- 
-            ProgressBar bar = (ProgressBar) findViewById(R.id.progressBar);
-            bar.setVisibility(View.INVISIBLE);
+        }
+
+        @Override
+        protected INDArray doInBackground(String... params) {
+            // Main background thread, this will load the model and test the input image
+	    // The dimensions of the images are set here
+            int height = 28;
+            int width = 28;
+            int channels = 1;
+
+            //Now we load the model from the raw folder with a try / catch block
+            try {
+                // Load the pretrained network.
+                InputStream inputStream = getResources().openRawResource(R.raw.trained_mnist_model);
+                MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(inputStream);
+
+                //load the image file to test
+                File f=new File(absolutePath, "drawn_image.jpg");
+
+                //Use the nativeImageLoader to convert to numerical matrix
+                NativeImageLoader loader = new NativeImageLoader(height, width, channels);
+
+                //put image into INDArray
+                INDArray image = loader.asMatrix(f);
+
+                //values need to be scaled
+                DataNormalization scalar = new ImagePreProcessingScaler(0, 1);
+
+                //then call that scalar on the image dataset
+                scalar.transform(image);
+
+                //pass through neural net and store it in output array
+                output = model.output(image);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return output;
         }
 ```
-## <a name="head_link3">Handling images from user input</a>
 
-The doInBackground() method will handle the formatting of the training data, the construction of the neural net, the training of the net, and the analysis of the input data by the trained model. The user input has only 4 values, thus we can add those directly to a 1x4 INDArray using the putScalar() method. The training data is much larger and must be converted from CSV lists to matrices through an iterative *for* loop. 
+## <a name="head_link3">Handling images from user input</a>
  
-The training data is stored in the app as two arrays, one for the Iris measurements named *irisData* which contains a list of 150 iris measurements and another for the labels of iris type named *labelData*. These will be transformed to 150x4 and 150x3 matrices, respectively, so that they can be converted into INDArray objects that the neural network will use for training. 
-```java
-/ This is our main background thread for the neural net
-        @Override
-        protected String doInBackground(Double... params) {
-        //Get the doubles from params, which is an array so they will be 0,1,2,3
-            double pld = params[0];
-            double pwd = params[1];
-            double sld = params[2];
-            double swd = params[3];
- 
-            //Create input INDArray for the user measurements
-            INDArray actualInput = Nd4j.zeros(1,4);
-            actualInput.putScalar(new int[]{0,0}, pld);
-            actualInput.putScalar(new int[]{0,1}, pwd);
-            actualInput.putScalar(new int[]{0,2}, sld);
-            actualInput.putScalar(new int[]{0,3}, swd);
- 
-            //Convert the iris data into 150x4 matrix
-            int row=150;
-            int col=4;
-            double[][] irisMatrix=new double[row][col];
-            int i = 0;
-            for(int r=0; r<row; r++){
-                for( int c=0; c<col; c++){
-            irisMatrix[r][c]=com.example.jmerwin.irisclassifier.DataSet.irisData[i++];
-                }
-            }
- 
-            //Now do the same for the label data
-            int rowLabel=150;
-            int colLabel=3;
-            double[][] twodimLabel=new double[rowLabel][colLabel];
-            int ii = 0;
-            for(int r=0; r<rowLabel; r++){
-                for( int c=0; c<colLabel; c++){
-        twodimLabel[r][c]=com.example.jmerwin.irisclassifier.DataSet.labelData[ii++];
-                }
-            }
- 
-            //Converting the data matrices into training INDArrays is straight forward
-            INDArray trainingIn = Nd4j.create(irisMatrix);
-            INDArray trainingOut = Nd4j.create(twodimLabel);
-```
+ Now lets add the code for the draw canvas that will run on the main thread and allow the user to draw a number on the screen. 
+ 
+
 ## <a name="head_link4">Testing the image</a>
 
 Now that our data is ready, we can build a simple multi-layer perceptron with a single hidden layer. The *DenseLayer* class is used to create the input layer and the hidden layer of the network while the *OutputLayer* class is used for the Output layer. The number of columns in the input INDArray must equal to the number of neurons in the input layer (nIn). The number of neurons in the hidden layer input must equal the number inputLayer’s output array (nOut). Finally, the outputLayer input should match the hiddenLayer output. The output must equal the number of possible classifications, which is 3.

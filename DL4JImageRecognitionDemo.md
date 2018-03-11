@@ -27,7 +27,7 @@ Deeplearning4J applications requires application specific dependencies in the bu
         compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-arm'
         testCompile 'junit:junit:4.12'
 ```
-Depending on the combination of dependencies, some duplication conflicts will arise that must be excluded. After adding the above dependencies and the exclusions listed below, sync the Gradle add additional exclusions if needed to suppress any errors which arise. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: **> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'**
+Depending on the combination of dependencies, duplication conflicts will arise that must be fixed with exclusions. After adding the above dependencies and the exclusions listed below, sync the Gradle file add additional exclusions if needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: **> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'**
 ```java
 packagingOptions {
  
@@ -68,7 +68,13 @@ configurations.all {
 ```
 ## <a name="head_link2">Accessing the neural network on a background thread</a>
 
-Training even a simple neural network like in this example requires a significant amount of processor power, which is in limited supply on mobile devices. Thus, it is imperative that a background thread be used for the building and training of the neural network which then returns the output to the main thread for updating the UI. In this example we will be using an AsyncTask which accepts the input measurements from the UI and passes them as type double to the doInBackground() method. First, lets get references to the editTexts in the UI layout that accept the iris measurements inside of our onCreate method. Then an onClickListener will execute our asyncTask, pass it the measurements entered by the user, and show a progress bar until we hide it again in onPostExecute().
+Using a nerual network requires a significant amount of processor power, which is in limited supply on mobile devices. Thus, a background thread be used for loading of the trained neural network and the testing of the user drawn image using AsyncTask. In this application we will run image drawing code on the main thread and an AsyncTask to load the drawn image from internal memory and test it against the trained model. First, lets look at how to save the trained neural network we will be using in the application. 
+
+You will need to begin by following this [tutorial](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6) to set up the Mnist demo on your desktop. The  
+
+
+
+First, lets get references to the editTexts in the UI layout that accept the iris measurements inside of our onCreate method. Then an onClickListener will execute our asyncTask, pass it the measurements entered by the user, and show a progress bar until we hide it again in onPostExecute().
 ```java
 public class MainActivity extends AppCompatActivity {
  

@@ -6,15 +6,15 @@ Contents
 * [Memory Management](#head_link4)
 * [Saving and Loading Networks on Android](#head_link5)
 
-While training neural networks is typically done on powerful computers running on multiple GPUs, the compatibility of Deeplearning4J with the Android platform makes using DL4J neural networks in android applications a possibility. This tutorial will cover the basics of seeting up android studio for building DL4J applications. Several configurations for dependencies, memory management, and compilation exculations needed to mitigate the limitatiosn of low powered modile device are outlined below. If you just want to get a DL4J app running on your device, you can jump ahead to a simple example application which trains a neural network for Iris flower classification is available example [here](https://github.com/jrmerwin/DL4JIrisClassifierDemo).
+While neural networks are typically run on powerful computers using multiple GPUs, the compatibility of Deeplearning4J with the Android platform makes using DL4J neural networks in android applications a possibility. This tutorial will cover the basics of seeting up android studio for building DL4J applications. Several configurations for dependencies, memory management, and compilation exclusions needed to mitigate the limitations of low powered modile device are outlined below. If you just want to get a DL4J app running on your device, you can jump ahead to a simple demo application which trains a neural network for Iris flower classification available [here](https://github.com/jrmerwin/DL4JIrisClassifierDemo).
 ## <a name="head_link1">Prerequisites</a>
 * Android Studio 2.2 or newer, which can be downloaded [here](https://developer.android.com/studio/index.html#Other). 
 * Android Studio version 2.2 and higher comes with the latest OpenJDK embedded; however, it is recommended to have the JDK installed on your own as you are then able to update it independent of Android Studio. Android Studio 3.0 and later supports all of Java 7 and a subset of Java 8 language features. Java JDKs can be downloaded from Oracle's using this [here](https://http://www.oracle.com/technetwork/java/javase/downloads/index.html).
 * Within Android studio, the Android SDK Manager can be used to install Android Build tools 24.0.1 or later, SDK platform 24 or later, and the Android Support Repository. 
-* l An Android device or an emulator running API level 21 or higher. A minimum of 200 MB of internal storage space free is recommended.
+* An Android device or an emulator running API level 21 or higher. A minimum of 200 MB of internal storage space free is recommended.
 It is also recommended that you download and install IntelliJ IDEA, Maven, and the complete dl4j-examples directory for building and building and training neural nets on your desktop instead of android studio. A quickstart guide for setting up DL4j projects can be found [here](https://deeplearning4j.org/quickstart).
 ## <a name="head_link2">Required Dependencies</a>
-In order to use Deeplearning4J in your Android projects, you will need to add the following dependencies to your app module’s build.gradle file:
+In order to use Deeplearning4J in your Android projects, you will need to add the following dependencies to your app module’s build.gradle file. Depending on the type of neural network used in your application, you may need to add additional dependencies.
 ``` java
 compile 'org.deeplearning4j:deeplearning4j-nn:0.9.1'
 compile 'org.nd4j:nd4j-native:0.9.1'
@@ -25,7 +25,7 @@ compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-x86'
 compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-arm'
 testCompile 'junit:junit:4.12'
 ```
-DL4J depends on ND4J, which is a library that offers fast n-dimensional arrays. ND4J in turn depends on a platform-specific native code library called JavaCPP,therefore you must load a version of ND4J that matches the architecture of the Android device. Both -x86 and -arm types can be included to support multiple device processor types. 
+DL4J depends on ND4J, which is a library that offers fast n-dimensional arrays. ND4J in turn depends on a platform-specific native code library called JavaCPP, therefore you must load a version of ND4J that matches the architecture of the Android device. Both -x86 and -arm types can be included to support multiple device processor types.
 
 The above dependencies contain several files with identical names which must be handled with the following exclude parameters to your packagingOptions.
 ```java
@@ -51,7 +51,7 @@ Compiling these dependencies involves a large number of files, thus it is necess
 ```java
 multiDexEnabled true
 ```
-Finally, a conflict in the junit module versions will throw the following error: *> Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ*. This can be suppressed by forcing all of the junit modules to use the same version with the following:
+A conflict in the junit module versions often causes the following error:  *> Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ*. This can be suppressed by forcing all of the junit modules to use the same version with the following:
 ``` java
 configurations.all {
     resolutionStrategy.force 'junit:junit:4.12'
@@ -78,7 +78,7 @@ buildscript {
     }
 }
 ```
-Proguard optimzes and reduces the amount of code in your Android application in order to make if  smaller and faster. Unfortunately, proguard removes annotations be default, including the @Platform annotation used by javaCV. To make proguard preserve these annotations and keep native methods add the following flags to the progaurd-rules.pro file. 
+Proguard optimizes and reduces the amount of code in your Android application in order to make if  smaller and faster. Unfortunately, proguard removes annotations by default, including the @Platform annotation used by javaCV. To make proguard preserve these annotations and keep native methods add the following flags to the progaurd-rules.pro file. 
 ``` java
 # enable optimization
 -optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
@@ -176,11 +176,13 @@ It may also be advantageous to increase the allocated memory to your app by addi
 ``` xml
 android:largeHeap="true"
 ```
+As of release 0.9.0, ND4J offers an additional memory-management model: workspaces. Workspaces allow you to reuse memory for cyclic workloads without the JVM Garbage Collector for off-heap memory tracking. In other words, D4j Workspace is memory chunk, preallocated once, and reused over in over.
+*the use of workspaces in Android Applications is still under developement
 
 ## <a name="head_link5">Saving and Loading Networks on Android</a>
-Practical considerations regarding performance limits are needed when building applications with neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. 
+Practical considerations regarding performance limits are needed when building Android applications that run neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. 
 
-There is also the option of training on a device and saving the trained model on the phone's external storage. The trained model can then be used as an application resource after an initial training event. This approach is useful for training networks with data obtained from user input. The following code illustrates how to train a network and save it on the phone's external resources.
+When training on a device is a reasonable option, the application performance can be improved by saving the trained model on the phone's external storage once an initial training is complete. The trained model can then be used as an application resource. This approach is useful for training networks with data obtained from user input. The following code illustrates how to train a network and save it on the phone's external resources.
 
 For API 23 and greater, you will need to include the permissions in your manifest and also programmatically request the read and write permissions in your activity. The required Manifest persmissions are:
 ``` xml
@@ -222,7 +224,7 @@ public class MainActivity extends AppCompatActivity
 	    }
 	}
 ```
-To save a network after training
+To save a network after training on the device use a OutputStream within a try  catch block.
 ``` java 
 try {
     File file = new File(Environment.getExternalStorageDirectory() + "/trained_model.zip");
@@ -234,7 +236,7 @@ try {
     Log.e("saveToExternalStorage error", e.getMessage());
 }
 ```
-To load the trained network from storage
+To load the trained network from storage you can use the restoreMultiLayerNetwork method.
 ``` java 
 try{
     //Load the model
@@ -245,11 +247,11 @@ try{
     Log.e("Load from External Storage error", e.getMessage());
 }
 ```
-For larger or more complex neural networks like Convolutional or Reccurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. As an alternative, the Neural Network can be built and trained on the desktop and then loaded as a pre-trained model in the application. Using a pre-trained model in you Android application can be achieved with the following steps:
+For larger or more complex neural networks like Convolutional or Reccurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. As an alternative, the Neural Network can be trained on the desktop, saved via ModelSerializer, and then loaded as a pre-trained model in the application. Using a pre-trained model in you Android application can be achieved with the following steps:
 * Train the yourModel on desktop and save via modelSerializer.
 * Create a raw resource folder in the res directory of the application.
 * Copy yourModel.zip file into the raw folder.
-* Access it from your resources using an inputStream like so:
+* Access it from your resources using an inputStream within a try / catch block.
 ``` java
 try {
 // Load name of model file (yourModel.zip).

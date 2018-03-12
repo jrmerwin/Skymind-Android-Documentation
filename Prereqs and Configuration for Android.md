@@ -1,4 +1,4 @@
-# Prerequisits and Configurations for DL4J in Android
+# Prerequisites and Configurations for DL4J in Android
 Contents
 * [Prerequisites](#head_link1)
 * [Required Dependencies](#head_link2)

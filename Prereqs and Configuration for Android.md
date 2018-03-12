@@ -272,4 +272,4 @@ try {
 
 
 
-Sections adapted from [Progur](https://github.com/jrmerwin/DL4JIrisClassifierDemo) 
+Sections adapted from Progur.

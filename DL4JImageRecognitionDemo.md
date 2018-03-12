@@ -10,7 +10,7 @@ Contents
 * [Conclusion](#head_link6)
 
 ## DL4JImageRecognitionDemo
-This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 1..9. The application UI allows the user to draw a number which is then tested against the trained netowrk. The output displays the most probably numeric values and the probability score. This tutorial will cover the use of the trained neural network in Android studio, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating how to train and saving neural networks used in this application, please see this [tutorial](https://deeplearning4j.org/quickstart). More information on prerequisits for building DL4J Android Applications can be found [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). 
+This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 0..9. The application user interace allows the user to draw a number on the device screen which is then tested against the trained network. The output displays the most probable numeric values and the probability score. This tutorial will cover the use of a trained neural network in an Android Application, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating how to train and save the neural networks used in this application, please see this DL4J quickstart [tutorial](https://deeplearning4j.org/quickstart). More information on general prerequisits for building DL4J Android Applications can be found [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). 
 
 ![](images/screen2.png)
 ## <a name="head_link1">Setting the Dependencies</a>
@@ -27,7 +27,7 @@ Deeplearning4J applications requires application specific dependencies in the bu
         compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-arm'
         testCompile 'junit:junit:4.12'
 ```
-Depending on the combination of dependencies, duplication conflicts will arise that must be fixed with exclusions. After adding the above dependencies and the exclusions listed below, sync the Gradle file add additional exclusions if needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: **> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'**
+Depending on the combination of dependencies, duplication conflicts can arise that must be handled with exclusions. After adding the above dependencies and the exclusions listed below, sync the Gradle file add additional exclusions if needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: **> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'**
 ```java
 packagingOptions {
  
@@ -51,7 +51,7 @@ Compiling these dependencies involves a large number of files, thus it is necess
 ```java
 multiDexEnabled true
 ```
-Including multiDex will generate an 'Unable to merge dex' error which can be supressed with these additional exclusions added to the dependencies block
+Including multiDex can generate an 'Unable to merge dex' error which can be supressed with these additional exclusions added to the dependencies block
 
 ```java
 compile 'com.google.code.findbugs:annotations:3.0.1', {
@@ -68,15 +68,15 @@ configurations.all {
 ```
 ## <a name="head_link2">Training and loading the Mnist model in the Android project resources</a>
 
-Using a nerual network requires a significant amount of processor power, which is in limited supply on mobile devices. Thus, a background thread be used for loading of the trained neural network and the testing of the user drawn image using AsyncTask. In this application we will run image drawing code on the main thread and an AsyncTask to load the drawn image from internal memory and test it against the trained model. First, lets look at how to save the trained neural network we will be using in the application. 
+Using a nerual network requires a significant amount of processor power, which is in limited supply on mobile devices. Therefore, a background thread must be used for loading of the trained neural network and the testing of the user drawn image by using AsyncTask. In this application we will run the canvas.draw code on the main thread and use an AsyncTask to load the drawn image from internal memory and test it against the trained model on a background thread. First, lets look at how to save the trained neural network we will be using in the application.
 
-You will need to begin by following the DeepLearning4J quick start [guide](https://deeplearning4j.org/quickstart) to set up, train, and save neural network models on a desktop computer. The DL4J example which trains and saves the Mnist model used in this application is *MnistImagePipelineExampleSave.java* and is included in the quick start guide referenced above. The code for the Mnist demo is also available [here](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). Running this demo will train the Mnist neural network model and save it as "trained_mnist_model.zip" in the *dl4j\target folder* of the *dl4j-examples* directory. Copy the file and save it in the raw folder of your project in android studio. 
+You will need to begin by following the DeepLearning4J quick start [guide](https://deeplearning4j.org/quickstart) to set up, train, and save neural network models on a desktop computer. The DL4J example which trains and saves the Mnist model used in this application is *MnistImagePipelineExampleSave.java* and is included in the quick start guide referenced above. The code for the Mnist demo is also available [here](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). Running this demo will train the Mnist neural network model and save it as *"trained_mnist_model.zip"* in the *dl4j\target folder* of the *dl4j-examples* directory. You can then copy the file and save it in the raw folder of your Android project.
 
 ![](images/rawFolder.PNG)
 
 ## <a name="head_link7">Accessing the trained model using an AsyncTask</a>
 
-Now let’s start by writing our AsyncTask<*Params*, *Progress*, *Results*> to run the neural network on a background thread. The AsyncTask will use the parameter types <String, Integer, INDArray>. The *Params* type is set to String, which will pass the Path to the saved image to the asyncTask as it is executed. This path will be used in the doInBackground() method to locate and load the trained Mnist model. The *Results* parameter is of type INDArray which will store the results from the neural network and pass it to the onPostExecute method that has access to the main thread for updating the UI. For more on NDArrays, see https://nd4j.org/userguide. 
+Now let’s start by writing our AsyncTask<*Params*, *Progress*, *Results*> to load and use the neural network on a background thread. The AsyncTask will use the parameter types <String, Integer, INDArray>. The *Params* type is set to String, which will pass the Path for the saved image to the asyncTask as it is executed. This path will be used in the doInBackground() method to locate and load the trained Mnist model. The *Results* parameter is of type INDArray which will store the results from the neural network and pass it to the onPostExecute method that has access to the main thread for updating the UI. For more on NDArrays, see https://nd4j.org/userguide. Note that the AsyncTask requires that we override two more methods (the onProgressUpdate and onPostExecute methods) which we will get to later in the demo.
 ```java
 private class AsyncTaskRunner extends AsyncTask<String, Integer, INDArray> {
 
@@ -127,7 +127,7 @@ private class AsyncTaskRunner extends AsyncTask<String, Integer, INDArray> {
 
 ## <a name="head_link3">Handling images from user input</a>
  
-Now lets add the code for the draw canvas that will run on the main thread and allow the user to draw a number on the screen. This is a generic draw program written as an inner class within the MainActivity. It extends View and overrides a series of relevant methods. The saving of the drawing to internal memory and launching of the AsyncTask with the Path to that image are executed in the onTouchEvent case statment for case *MotionEvent.ACTION_UP*. This has the streamline action of automatically returning results for an image after the user completes the drawing. 
+Now lets add the code for the drawing canvas that will run on the main thread and allow the user to draw a number on the screen. This is a generic draw program written as an inner class within the MainActivity. It extends View and overrides a series of methods. The drawing is saved to internal memory and the AsyncTask is executed with the image Path passed to it in the onTouchEvent case statment for case *MotionEvent.ACTION_UP*. This has the streamline action of automatically returning results for an image after the user completes the drawing. 
 ```java
 //code for the drawing input
     public class DrawingView extends View {
@@ -231,7 +231,7 @@ Now lets add the code for the draw canvas that will run on the main thread and a
     }
 
 ```
-Now lets build a series of helper methods that save the image, load the image, and handle the progress message. First we will write the saveDrawing() method. It uses getDrawingCache() to retrieve the drawing from the drawingView and store it as a bitmap. We then create a file directory and file for the bitmap called "drawn_image.jpg". Finally, we use FileOutputStream and a try / catch block to write the bitmap to the file location. The method returns the absolutPath to the file location which will be used by the loadImageFromStorage()  method. 
+Now we need to build a series of helper methods. First we will write the saveDrawing() method. It uses getDrawingCache() to retrieve the drawing from the drawingView and store it as a bitmap. We then create a file directory and file for the bitmap called "drawn_image.jpg". Finally, FileOutputStream is used in a try / catch block to write the bitmap to the file location. The method returns the absolute Path to the file location which will be used by the loadImageFromStorage() method. 
 ```java
 public String saveDrawing(){
         drawingView.setDrawingCacheEnabled(true);
@@ -260,7 +260,7 @@ public String saveDrawing(){
         return directory.getAbsolutePath();
     }
 ```
-Next we will write the loadImageFromStorage method which will use the absolute path returned from saveDrawing() to load the saved image and display it in the UI as part of the outut display. It uses a try / catch block use a FileInputStream to set the image to the ImageView img in the UI layout.
+Next we will write the loadImageFromStorage method which will use the absolute path returned from saveDrawing() to load the saved image and display it in the UI as part of the outut display. It uses a try / catch block and a FileInputStream to set the image to the ImageView *img* in the UI layout.
 ```java
     private void loadImageFromStorage(String path)
     {

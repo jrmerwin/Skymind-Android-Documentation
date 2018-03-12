@@ -299,7 +299,7 @@ We also need to write two methods that extract the predicted number from the neu
         return largest;
     }
 ```
-Finally, we need a few methods we can call to show and hide an 'In Progress...' message while the background thread is running. These will be called when the AsyncTask is executed and in the onPostExecute method when the background thread completes.
+Finally, we need a few methods we can call to control the visibility of an 'In Progress...' message while the background thread is running. These will be called when the AsyncTask is executed and in the onPostExecute method when the background thread completes.
 ```java
     public void onProgressBar(){
         TextView bar = findViewById(R.id.processing);
@@ -311,7 +311,7 @@ Finally, we need a few methods we can call to show and hide an 'In Progress...' 
         bar.setVisibility(View.INVISIBLE);
     }
 ```
-Now lets go to the onCreate method to initialize the draw canvas and set some global variables as well.
+Now lets go to the onCreate method to initialize the draw canvas and set some global variables.
 ```java
 public class MainActivity extends AppCompatActivity {
 
@@ -332,14 +332,15 @@ public class MainActivity extends AppCompatActivity {
 
 ## <a name="head_link5">Updating the UI</a>
 
-Now lets complete our AsyncTask by overriding the onPrgress and onPostExecute methods. Once the doInBackground method of AsyncTask completes the classification results will be passed to the onPostExecute which has access to the main thread and UI, allowing us to update the UI with the results. We also need to write code for the onProgress method of the AsyncTask; however, since we will not be using this method a call to its superclass will suffice. 
+Now we can complete our AsyncTask by overriding the onProgress and onPostExecute methods. Once the doInBackground method of AsyncTask completes, the classification results will be passed to the onPostExecute which has access to the main thread and UI allowing us to update the UI with the results. Since we will not be using the onProgress  method, a call to its superclass will suffice.
+
 ```java
 @Override
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
         }
 ```
-The onPostExecute method will recieve the INDArry which contains the nerual network results as a 1x10 array with probability values that the input drawing was each possible digit (0..9). From this we need to find out which row of the array contains the largest value and what the size of that value is. These two values will determine which number the neural network has classified the drawing as and how confident the network score is. These values will be refered to in the UI as *Prediction* and the *Confidence*, respectively. In the code below, the individual values for each position of the INDArray is passed to an array of type double using getDouble() on the result IDArray. We then get references to the TextViews we will update in the UI and call our helper methods on the array to return the array maximum (confidence) and index of the largest value (predicition). Note we also need to limit the number of decimal places reported on the probabilities by setting a DecimalFormat pattern.
+The onPostExecute method will recieve an INDArray which contains the nerual network results as a 1x10 array of probability values that the input drawing is each possible digit (0..9). From this we need to determine which row of the array contains the largest value and what the size of that value is. These two values will determine which number the neural network has classified the drawing as and how confident the network score is. These values will be refered to in the UI as *Prediction* and the *Confidence*, respectively. In the code below, the individual values for each position of the INDArray are passed to an array of type double using the getDouble() method on the result INDArray. We then get references to the TextViews which will be updated in the UI and call our helper methods on the array to return the array maximum (confidence) and index of the largest value (predicition). Note we also need to limit the number of decimal places reported on the probabilities by setting a DecimalFormat pattern.
 ```java
 
         @Override
@@ -369,7 +370,7 @@ The onPostExecute method will recieve the INDArry which contains the nerual netw
 
 ## <a name="head_link6">Conclusion</a>
 
-This tutorial provides the framework for image recognition in an Android Application using DL4J. It illustrates how to load a pre-trained DL4J model from the raw resources file and how to test user generate input images against the model. The AsyncTask then returns the output to the mainthread and updates the UI. 
+This tutorial provides a basic framework for image recognition in an Android Application using a DL4J neural network. It illustrates how to load a pre-trained DL4J model from the raw resources file and how to test user generate input images against the model. The AsyncTask then returns the output to the mainthread and updates the UI.
 
 The complete repo for this example is available [here.](https://github.com/jrmerwin/DL4JImageRecognitionDemo)
 

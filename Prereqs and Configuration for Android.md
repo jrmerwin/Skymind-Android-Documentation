@@ -177,7 +177,8 @@ It may also be advantageous to increase the allocated memory to your app by addi
 android:largeHeap="true"
 ```
 As of release 0.9.0, ND4J offers an additional memory-management model: workspaces. Workspaces allow you to reuse memory for cyclic workloads without the JVM Garbage Collector for off-heap memory tracking. In other words, D4j Workspace is memory chunk, preallocated once, and reused over in over.
-*the use of workspaces in Android Applications is still under developement
+
+*the use of workspaces in Android Applications is still under developement*
 
 ## <a name="head_link5">Saving and Loading Networks on Android</a>
 Practical considerations regarding performance limits are needed when building Android applications that run neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. 

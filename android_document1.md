@@ -2,27 +2,11 @@
 title: Deploying Deeplearning4j to Android
 layout: default
 ---
-<title>How to Use Deeplearning4J in Android Apps</title>
-<meta property="og:title" content="How to Use Deeplearning4J in Android Apps" />
-<meta name="description" content="DeepLearning4J (DL4J) is a popular machine learning library that runs on the JVM. In this tutorial, I’ll show you how to use it to create and train neural networks in an Android app." />
-<meta property="og:description" content="DeepLearning4J (DL4J) is a popular machine learning library that runs on the JVM. In this tutorial, I’ll show you how to use it to create and train neural networks in an Android app." />
-<link rel="canonical" href="http://progur.com/2017/01/how-to-use-deeplearning4j-on-android.html" />
-<meta property="og:url" content="http://progur.com/2017/01/how-to-use-deeplearning4j-on-android.html" />
-<meta property="og:site_name" content="Progur!" />
-<meta property="og:type" content="article" />
-<meta property="article:published_time" content="2017-01-14T00:00:00+05:30" />
-<meta name="twitter:card" content="summary" />
-<meta name="twitter:site" content="@hathibel" />
-<meta name="twitter:creator" content="@hathibel" />
-<script type="application/ld+json">
-  {
-    "@context": "http://schema.org",
-    "@type": "BlogPosting",
-    "headline": "How to Use Deeplearning4J in Android Apps",
-    "datePublished": "2017-01-14T00:00:00+05:30",
-    "description": "DeepLearning4J (DL4J) is a popular machine learning library that runs on the JVM. In this tutorial, I’ll show you how to use it to create and train neural networks in an Android app.",
-    "url": "http://progur.com/2017/01/how-to-use-deeplearning4j-on-android.html"
-  }
+<title>Using Deeplearning4J in Android Applications</title>
+<meta property="og:title" content="Using Deeplearning4J in Android Applications" />
+<meta name="description" content="DeepLearning4J (DL4J) is a popular Java-based machine learning library. In this tutorial, I will demonstrate how to create and train neural networks in an Android app using DL4J." />
+<meta property="og:description" content="DeepLearning4J (DL4J) is a popular Java-based machine learning library. In this tutorial, I will demonstrate how to create and train neural networks in an Android app using DL4J." />
+
 </script>
 <!-- End Jekyll SEO tag -->
   <body>
@@ -32,12 +16,10 @@ layout: default
         <div class="col-md-12">
             <div>
                 <div>
-                    <h1 class="post-title">How to Use Deeplearning4J in Android Apps</h1>
-                    <div class="post-meta">Written by Ashraff Hathibelagal &bull; 14 January 2017</div><br>
+                    <h1 class="post-title">Using Deeplearning4J in Android Applications</h1>
+                    <div class="post-meta">Written by Jason Merwin &bull; 15 March 2018</div><br>
                     <div class="post-actual-content">
-                        <p>Generally speaking, training a neural network is a task best suited for powerful computers with multiple GPUs. But what if you want to do it on your humble Android phone or tablet? Well, it’s definitely possible. Considering an average Android device’s specifications, however, it will most likely be quite slow. If that’s not a problem for you, keep reading.</p>
-
-<p>In this tutorial, I’ll show you how to use <a href="https://github.com/deeplearning4j/deeplearning4j" target="_blank" rel="nofollow">Deeplearning4J</a>, a popular Java-based deep learning library, to create and train a neural network on an Android device.</p>
+                        <p>The example application trains a small neural network on the device using Anderson’s Iris data set for iris flower type classification. For a more indepth look at optimizing android for DL4J, please see the Prerequisites and Configuration documentation [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). This application has a simple UI to take measurements of petal length, petal width, sepal length, and sepal width from the user and returns the probability that the measurements belong to one of three types of Iris (*Iris serosa*, *Iris versicolor*, and *Iris virginica*). A data set includes 150 measurement values (50 for each iris type) and training the model takes anywhere from 5-20 seconds, depending on the device.</p>
 
 <h3 id="prerequisites">Prerequisites</h3>
 

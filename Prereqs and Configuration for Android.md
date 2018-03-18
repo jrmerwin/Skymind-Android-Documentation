@@ -190,7 +190,7 @@ Nd4j.getMemoryManager().setAutoGcWindow(5000)
 // this will totally disable it
 Nd4j.getMemoryManager().togglePeriodicGc(false);
 ```
-The example below ilustrates the use of a Workspace for memory allocation in the AsyncTask of and Android Application.
+The example below ilustrates the use of a Workspace for memory allocation in the AsyncTask of and Android Application. More information concerning ND4J Workspaces can be found [here](https://deeplearning4j.org/workspaces).
 ```java
 import org.nd4j.linalg.api.memory.MemoryWorkspace;
 import org.nd4j.linalg.api.memory.conf.WorkspaceConfiguration;

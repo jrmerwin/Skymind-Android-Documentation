@@ -176,9 +176,78 @@ It may also be advantageous to increase the allocated memory to your app by addi
 ``` xml
 android:largeHeap="true"
 ```
-As of release 0.9.0, ND4J offers an additional memory-management model: workspaces. Workspaces allow you to reuse memory for cyclic workloads without the JVM Garbage Collector for off-heap memory tracking. In other words, D4j Workspace is memory chunk, preallocated once, and reused over in over.
+As of release 0.9.0, ND4J offers an additional memory-management model: workspaces. Workspaces allow you to reuse memory for cyclic workloads without the JVM Garbage Collector for off-heap memory tracking. D4j Workspace allows for memory to be preallocated before a try / catch block and reused over in over within that block.
 
-*the use of workspaces in Android Applications is still under developement*
+If your training process uses workspaces, we recommend that you disable or reduce the frequency of periodic GC calls prior to your model.fit() call.
+``` java
+// this will limit frequency of gc calls to 5000 milliseconds
+Nd4j.getMemoryManager().setAutoGcWindow(5000)
+
+// this will totally disable it
+Nd4j.getMemoryManager().togglePeriodicGc(false);
+```
+The example below ilustrates the use of a Workspace for memory allocation in the AsyncTask of and Android Application.
+```java
+import org.nd4j.linalg.api.memory.MemoryWorkspace;
+import org.nd4j.linalg.api.memory.conf.WorkspaceConfiguration;
+import org.nd4j.linalg.api.memory.enums.AllocationPolicy;
+import org.nd4j.linalg.api.memory.enums.LearningPolicy;
+
+
+private class AsyncTaskRunner extends AsyncTask<String, Integer, INDArray> {
+
+        // Runs in UI before background thread is called
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        //Runs on background thread, this is where we will initiate the Workspace
+        protected INDArray doInBackground(String... params) {
+
+            // we will create configuration with 10MB memory space preallocated
+            WorkspaceConfiguration initialConfig = WorkspaceConfiguration.builder()
+                    .initialSize(10 * 1024L * 1024L)
+                    .policyAllocation(AllocationPolicy.STRICT)
+                    .policyLearning(LearningPolicy.NONE)
+                    .build();
+
+            INDArray result = null;
+
+            try(MemoryWorkspace ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(initialConfig, "SOME_ID")) {
+            // now, INDArrays created within this try block will be allocated from this workspace pool
+
+                //Load a trained model
+                File file = new File(Environment.getExternalStorageDirectory() + "/trained_model.zip");
+                MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(file);
+
+                // Create input in INDArray
+                INDArray inputData = Nd4j.zeros(1, 4);
+
+                inputData.putScalar(new int[]{0, 0}, 1);
+                inputData.putScalar(new int[]{0, 1}, 0);
+                inputData.putScalar(new int[]{0, 2}, 1);
+                inputData.putScalar(new int[]{0, 3}, 0);
+
+                result = restored.output(inputData);
+
+            }
+            catch(IOException ex){Log.d("AsyncTaskRunner2 ", "catchIOException = " + ex  );}
+
+            return result;
+        }
+
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+
+        protected void onPostExecute(INDArray result) {
+            super.onPostExecute(result);
+         //Handle results and update UI here.
+        }
+
+    }
+```
 
 ## <a name="head_link5">Saving and Loading Networks on Android</a>
 Practical considerations regarding performance limits are needed when building Android applications that run neural networks. Training a neural network on a device is possible, but should only be attempted with networks with limited numbers of layers, nodes, and iterations. The first Demo app [DL4JIrisClassifierDemo](https://github.com/jrmerwin/DL4JIrisClassifierDemo) is able to train on a standard device in about 15 seconds. 
@@ -269,7 +338,3 @@ try {
         e.printStackTrace();
     }
 ```
-
-
-
-Sections adapted from Progur.

@@ -178,7 +178,7 @@ android:largeHeap="true"
 ```
 As of release 0.9.0, ND4J offers an additional memory-management model: workspaces. Workspaces allow you to reuse memory for cyclic workloads without the JVM Garbage Collector for off-heap memory tracking. D4j Workspace allows for memory to be preallocated before a try / catch block and reused over in over within that block.
 
-If your training process uses workspaces, we recommend that you disable or reduce the frequency of periodic GC calls prior to your model.fit() call.
+If your training process uses workspaces, it is recommended that you disable or reduce the frequency of periodic GC calls prior to your model.fit() call.
 ``` java
 // this will limit frequency of gc calls to 5000 milliseconds
 Nd4j.getMemoryManager().setAutoGcWindow(5000)

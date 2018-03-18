@@ -1,227 +1,266 @@
 ---
-title: Deploying Deeplearning4j to Android
+title: Using Deeplearning4J in Android Applications 
 layout: default
 ---
-<title>Using Deeplearning4J in Android Applications</title>
-<meta property="og:title" content="Using Deeplearning4J in Android Applications" />
-<meta name="description" content="DeepLearning4J (DL4J) is a popular Java-based machine learning library. In this tutorial, I will demonstrate how to create and train neural networks in an Android app using DL4J." />
-<meta property="og:description" content="DeepLearning4J (DL4J) is a popular Java-based machine learning library. In this tutorial, I will demonstrate how to create and train neural networks in an Android app using DL4J." />
+# Using Deeplearning4J in Android Applications 
+### DL4JIrisClassifierDemo
+The example application trains a small neural network on the device using Anderson’s Iris data set for iris flower type classification. For a more indepth look at optimizing android for DL4J, please see the Prerequisites and Configuration documentation [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). This application has a simple UI to take measurements of petal length, petal width, sepal length, and sepal width from the user and returns the probability that the measurements belong to one of three types of Iris (*Iris serosa*, *Iris versicolor*, and *Iris virginica*). A data set includes 150 measurement values (50 for each iris type) and training the model takes anywhere from 5-20 seconds, depending on the device.
 
-</script>
-<!-- End Jekyll SEO tag -->
-  <body>
+Contents
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <div>
-                <div>
-                    <h1 class="post-title">Using Deeplearning4J in Android Applications</h1>
-                    <div class="post-meta">Written by Jason Merwin &bull; 15 March 2018</div><br>
-                    <div class="post-actual-content">
-                        <p>The example application trains a small neural network on the device using Anderson’s Iris data set for iris flower type classification. For a more indepth look at optimizing android for DL4J, please see the Prerequisites and Configuration documentation [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). This application has a simple UI to take measurements of petal length, petal width, sepal length, and sepal width from the user and returns the probability that the measurements belong to one of three types of Iris (*Iris serosa*, *Iris versicolor*, and *Iris virginica*). A data set includes 150 measurement values (50 for each iris type) and training the model takes anywhere from 5-20 seconds, depending on the device.</p>
+* [Setting the Dependencies](#head_link1)
+* [Setting up the neural network on a background thread](#head_link2)
+* [Preparing the training data set and user input](#head_link3)
+* [Building and Training the Neural Network](#head_link4)
+* [Updating the UI](#head_link5)
+* [Conclusion](#head_link6)
 
-<h3 id="prerequisites">Prerequisites</h3>
+## DL4JIrisClassifierDemo
+![](images/screen.PNG)
+## <a name="head_link1">Setting the Dependencies</a>
+Deeplearning4J applications require several dependencies in the build.gradle file. The Deeplearning library in turn depends on the libraries of ND4J and OpenBLAS, thus these must also be added to the dependencies declaration. Starting with Android Studio 3.0, annotationProcessors need to be defined as well, requiring dependencies for -x86 or -arm processors. 
+```java
+	compile 'com.android.support:appcompat-v7:27.0.2'
+        compile 'com.android.support:design:27.0.2'
+        compile 'org.deeplearning4j:deeplearning4j-nn:0.9.1'
+        compile 'org.nd4j:nd4j-native:0.9.1'
+        compile 'org.nd4j:nd4j-native:0.9.1:android-x86'
+        compile 'org.nd4j:nd4j-native:0.9.1:android-arm'
+        compile 'org.bytedeco.javacpp-presets:systems-platform:1.4'
+        compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-x86'
+        compile 'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-arm'
+        testCompile 'junit:junit:4.12'
+```
+The DL4J and ND4J libraries contain several identically named files which requires exclusion statements in the packagingOptions. After added the above dependencies to the build.gradle file, try syncing Gradle with the below exclusions and add additional exclusions if needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path: **> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'**
+```java
+packagingOptions {
+ 
+	exclude 'META-INF/DEPENDENCIES'
+	exclude 'META-INF/DEPENDENCIES.txt'
+	exclude 'META-INF/LICENSE'
+	exclude 'META-INF/LICENSE.txt'
+	exclude 'META-INF/license.txt'
+	exclude 'META-INF/NOTICE'
+	exclude 'META-INF/NOTICE.txt'
+	exclude 'META-INF/notice.txt'
+	exclude 'META-INF/INDEX.LIST'
+ 
+	exclude 'org/bytedeco/javacpp/windows-x86/msvcp120.dll'
+	exclude 'org/bytedeco/javacpp/windows-x86_64/msvcp120.dll'
+	exclude 'org/bytedeco/javacpp/windows-x86/msvcr120.dll'
+	exclude 'org/bytedeco/javacpp/windows-x86_64/msvcr120.dll'
+        }
+```
+Compiling these dependencies involves a large number of files, thus it is necessary to set multiDexEnabled to true in defaultConfig.
+```java
+multiDexEnabled true
+```
 
-<p>For best results, you’ll need the following:</p>
-
-<ul>
-  <li>An Android device or emulator that runs API level 21 or higher, and has about 200 MB of internal storage space free. I strongly suggest you use an emulator first because you can quickly tweak it in case you run out of memory or storage space.</li>
-  <li>Android Studio 2.2 or newer</li>
-</ul>
-
-<h3 id="configuring-your-android-studio-project">Configuring Your Android Studio Project</h3>
-
-<p>To be able to use Deeplearning4J in your project, add the following <code class="highlighter-rouge">compile</code> dependencies to your app module’s <strong>build.gradle</strong> file:</p>
-
-<figure class="highlight"><pre><code class="language-groovy" data-lang="groovy"><span class="n">compile</span> <span class="s1">'org.deeplearning4j:deeplearning4j-core:0.8.0'</span>
-<span class="n">compile</span> <span class="s1">'org.nd4j:nd4j-native:0.8.0'</span>
-<span class="n">compile</span> <span class="s1">'org.nd4j:nd4j-native:0.8.0:android-x86'</span>
-<span class="n">compile</span> <span class="s1">'org.nd4j:nd4j-native:0.8.0:android-arm'</span>
-<span class="n">compile</span> <span class="s1">'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-x86'</span>
-<span class="n">compile</span> <span class="s1">'org.bytedeco.javacpp-presets:openblas:0.2.19-1.3:android-arm'</span>
-
-</code></pre></figure>
-
-<p>Android Studio 3.0 introduced new Gradle, now annotationProcessors should be defined too
-If you are using it, add following code to gradle dependencies:
-
-<figure class="highlight"><pre><code class="language-groovy" data-lang="groovy"<span class="n">annotationProcessor</span> <span class="s1">'org.projectlombok:lombok:1.16.16'</span></code></pre></figure>
-
-<p>If you have errors like
-<code class="language-groovy"><span class="n">Error:Error converting bytecode to dex:
-Cause: com.android.dex.DexException: Multiple dex files define Ledu/umd/cs/findbugs/annotations/Nullable;</span></code>
-
-Add the following dependency:
-<figure class="highlight"><pre><code class="language-groovy"><span class="n">compile</span> <span class="s1">'com.google.code.findbugs:annotations:3.0.1', { </span>
-  <span class="n">exclude module:</span> <span class="s1">'jsr305'</span>
-  <span class="n">exclude module:</span> <span class="s1">'jcip-annotations'</span>
+Finally, a conflict in the junit module versions will likely throw the following error: > Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ.
+This can be suppressed by focing all of the junit modules to use the same version.
+```java
+configurations.all {
+    resolutionStrategy.force 'junit:junit:4.12'
 }
-</span></code></pre></figure>
+```
+## <a name="head_link2">Setting up the neural network on a background thread</a>
 
-<p>If you want to include snapshot version of DL4J/ND4J you should write dependencies like below:
-<figure class="highlight"><pre><code class="language-groovy"><span class="n">compile group: 'org.nd4j', name: 'nd4j-native', version: '0.8.1-SNAPSHOT-android-arm'</span></code></pre></figure> as classifier doesn't work</p>
-  
-<p>As you can see, DL4J depends on ND4J, short for N-Dimensions for Java, which is a library that offers fast n-dimensional arrays. ND4J internally depends on a library called OpenBLAS, which contains platform-specific native code. Therefore, you must load a version of OpenBLAS and ND4J that matches the architecture of your Android device. Because I own an x86 device, I’m using <code class="highlighter-rouge">android-x86</code> as the platform.</p>
+Training even a simple neural network like in this example requires a significant amount of processor power, which is in limited supply on mobile devices. Thus, it is imperative that a background thread be used for the building and training of the neural network which then returns the output to the main thread for updating the UI. In this example we will be using an AsyncTask which accepts the input measurements from the UI and passes them as type double to the doInBackground() method. First, lets get references to the editTexts in the UI layout that accept the iris measurements inside of our onCreate method. Then an onClickListener will execute our asyncTask, pass it the measurements entered by the user, and show a progress bar until we hide it again in onPostExecute().
+```java
+public class MainActivity extends AppCompatActivity {
+ 
+ 
+@Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+ 
+        //get references to the editTexts that take the measurements
+        final EditText PL = (EditText) findViewById(R.id.editText);
+        final EditText PW = (EditText) findViewById(R.id.editText2);
+        final EditText SL = (EditText) findViewById(R.id.editText3);
+        final EditText SW = (EditText) findViewById(R.id.editText4);
+ 
+	  //onclick to capture the input and launch the asyncTask
+        Button button = (Button) findViewById(R.id.button);
+ 
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+ 
+                final double pl = Double.parseDouble(PL.getText().toString());
+                final double pw = Double.parseDouble(PW.getText().toString());
+                final double sl = Double.parseDouble(SL.getText().toString());
+                final double sw = Double.parseDouble(SW.getText().toString());
+ 
+                AsyncTaskRunner runner = new AsyncTaskRunner();
+ 
+		   //pass the measurement as params to the AsyncTask
+                runner.execute(pl,pw,sl,sw);
+ 
+                ProgressBar bar = (ProgressBar) findViewById(R.id.progressBar);
+                bar.setVisibility(View.VISIBLE);
+            }
+        });
+        }
+```
+Now let’s write our AsyncTask<*Params*, *Progress*, *Results*>. The AsyncTask needs to have a *Params* of type Double to receive the decimal value measurements from the UI. The *Result* type is set to INDArray, which is returned from the doInBackground() Method and passed to the onPostExecute() method for updating the UI. NDArrays are provided by the ND4J library and are essentially n-dimensional arrays with a given number of dimensions. For more on NDArrays, see https://nd4j.org/userguide. 
+```java
+private class AsyncTaskRunner extends AsyncTask<Double, Integer, INDArray> {
+ 
+        // Runs in UI before background thread is called
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+ 
+            ProgressBar bar = (ProgressBar) findViewById(R.id.progressBar);
+            bar.setVisibility(View.INVISIBLE);
+        }
+```
+## <a name="head_link3">Preparing the training data set and user input</a>
 
-<p>Dependencies of DL4J and ND4J have several files with identical names. In order to avoid build errors, add the following <code class="highlighter-rouge">exclude</code> parameters to your <code class="highlighter-rouge">packagingOptions</code>.</p>
+The doInBackground() method will handle the formatting of the training data, the construction of the neural net, the training of the net, and the analysis of the input data by the trained model. The user input has only 4 values, thus we can add those directly to a 1x4 INDArray using the putScalar() method. The training data is much larger and must be converted from CSV lists to matrices through an iterative *for* loop. 
+ 
+The training data is stored in the app as two arrays, one for the Iris measurements named *irisData* which contains a list of 150 iris measurements and another for the labels of iris type named *labelData*. These will be transformed to 150x4 and 150x3 matrices, respectively, so that they can be converted into INDArray objects that the neural network will use for training. 
+```java
+/ This is our main background thread for the neural net
+        @Override
+        protected String doInBackground(Double... params) {
+        //Get the doubles from params, which is an array so they will be 0,1,2,3
+            double pld = params[0];
+            double pwd = params[1];
+            double sld = params[2];
+            double swd = params[3];
+ 
+            //Create input INDArray for the user measurements
+            INDArray actualInput = Nd4j.zeros(1,4);
+            actualInput.putScalar(new int[]{0,0}, pld);
+            actualInput.putScalar(new int[]{0,1}, pwd);
+            actualInput.putScalar(new int[]{0,2}, sld);
+            actualInput.putScalar(new int[]{0,3}, swd);
+ 
+            //Convert the iris data into 150x4 matrix
+            int row=150;
+            int col=4;
+            double[][] irisMatrix=new double[row][col];
+            int i = 0;
+            for(int r=0; r<row; r++){
+                for( int c=0; c<col; c++){
+            irisMatrix[r][c]=com.example.jmerwin.irisclassifier.DataSet.irisData[i++];
+                }
+            }
+ 
+            //Now do the same for the label data
+            int rowLabel=150;
+            int colLabel=3;
+            double[][] twodimLabel=new double[rowLabel][colLabel];
+            int ii = 0;
+            for(int r=0; r<rowLabel; r++){
+                for( int c=0; c<colLabel; c++){
+        twodimLabel[r][c]=com.example.jmerwin.irisclassifier.DataSet.labelData[ii++];
+                }
+            }
+ 
+            //Converting the data matrices into training INDArrays is straight forward
+            INDArray trainingIn = Nd4j.create(irisMatrix);
+            INDArray trainingOut = Nd4j.create(twodimLabel);
+```
+## <a name="head_link4">Building and Training the Neural Network</a>
 
-<figure class="highlight"><pre><code class="language-groovy" data-lang="groovy"><span class="n">packagingOptions</span> <span class="o">{</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/DEPENDENCIES'</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/DEPENDENCIES.txt'</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/LICENSE'</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/LICENSE.txt'</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/license.txt'</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/NOTICE'</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/NOTICE.txt'</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/notice.txt'</span>
-    <span class="n">exclude</span> <span class="s1">'META-INF/INDEX.LIST'</span>
-<span class="o">}</span></code></pre></figure>
+Now that our data is ready, we can build a simple multi-layer perceptron with a single hidden layer. The *DenseLayer* class is used to create the input layer and the hidden layer of the network while the *OutputLayer* class is used for the Output layer. The number of columns in the input INDArray must equal to the number of neurons in the input layer (nIn). The number of neurons in the hidden layer input must equal the number inputLayer’s output array (nOut). Finally, the outputLayer input should match the hiddenLayer output. The output must equal the number of possible classifications, which is 3.
+```java
+//define the layers of the network
+        DenseLayer inputLayer = new DenseLayer.Builder()
+                .nIn(4)
+                .nOut(3)
+                .name("Input")
+                .build();
+ 
+        DenseLayer hiddenLayer = new DenseLayer.Builder()
+                .nIn(3)
+                .nOut(3)
+                .name("Hidden")
+                .build();
+ 
+        OutputLayer outputLayer = new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                .nIn(3)
+                .nOut(3)
+                .name("Output")
+                .activation(Activation.SOFTMAX)
+                .build();
+```
+The next step is to build the neural network using *nccBuilder*. The parameters selected below for training are standard. To learn more about optimizing network training, see deeplearning4j.org.
+```java
+        NeuralNetConfiguration.Builder nncBuilder = new NeuralNetConfiguration.Builder();
+        long seed = 6;
+        nncBuilder.seed(seed);
+        nncBuilder.iterations(1000);
+        nncBuilder.learningRate(0.1);
+        nncBuilder.activation(Activation.TANH);
+        nncBuilder.weightInit(WeightInit.XAVIER);
+        nncBuilder.regularization(true).l2(1e-4);
+ 
+        NeuralNetConfiguration.ListBuilder listBuilder = nncBuilder.list();
+        listBuilder.layer(0, inputLayer);
+        listBuilder.layer(1, hiddenLayer);
+        listBuilder.layer(2, outputLayer);
+ 
+        listBuilder.backprop(true);
+ 
+        MultiLayerNetwork myNetwork = new MultiLayerNetwork(listBuilder.build());
+        myNetwork.init();
+ 
+	  //Create a data set from the INDArrays and train the network
+        DataSet myData = new DataSet(trainingIn, trainingOut);
+        myNetwork.fit(myData);
+ 
+	  //Evaluate the input data against the model
+        INDArray actualOutput = myNetwork.output(actualInput);
+        Log.d("myNetwork Output ", actualOutput.toString());
+ 
+	  //Here we return the INDArray to onPostExecute where it can be 
+	  //used to update the UI
+        return actualOutput;
+        }
+       }
+```
+## <a name="head_link5">Updating the UI</a>
 
-<p>It is highly possible that you will have errors like:
-<code>Error:Execution failed for task ':app:transformResourcesWithMergeJavaResForDebug'.
-> More than one file was found with OS independent path 'org/bytedeco/javacpp/windows-x86/msvcp120.dll'</code>
-We should exclude them too. In my case:
-<figure class="highlight"><pre><code class="language-groovy" data-lang="groovy"><span class="n">exclude</span> <span class="s1">'org/bytedeco/javacpp/windows-x86/msvcp120.dll'</span>
-<span class="n">exclude</span> <span class="s1">'org/bytedeco/javacpp/windows-x86_64/msvcp120.dll'</span>
-<span class="n">exclude</span> <span class="s1">'org/bytedeco/javacpp/windows-x86/msvcr120.dll'</span>
-<span class="n">exclude</span> <span class="s1">'org/bytedeco/javacpp/windows-x86_64/msvcr120.dll'</span>
-</code></pre></figure>
+Once the training of the neural network and the classification of the user measurements are complete, the doInBackground() method will finish and onPostExecute() will have access to the main thread and UI, allowing us to update the UI with the classification results. Note that the decimal places reported on the probabilities can be controlled by setting a DecimalFormat pattern.
+```java
+//This is where we update the UI with our classification results
+        @Override
+        protected void onPostExecute(INDArray result) {
+            super.onPostExecute(result);
+ 
+        //Hide the progress bar now that we are finished
+        ProgressBar bar = (ProgressBar) findViewById(R.id.progressBar);
+        bar.setVisibility(View.INVISIBLE);
+ 
+        //Retrieve the three probabilities
+        Double first = result.getDouble(0,0);
+        Double second = result.getDouble(0,1);
+        Double third = result.getDouble(0,2);
+ 
+        //Update the UI with output
+        TextView setosa = (TextView) findViewById(R.id.textView11);
+        TextView versicolor = (TextView) findViewById(R.id.textView12);
+        TextView virginica = (TextView) findViewById(R.id.textView13);
+ 
+        //Limit the double to values to two decimals using DecimalFormat
+        DecimalFormat df2 = new DecimalFormat(".##");
+ 
+        //Set the text of the textViews in UI to show the probabilites
+        setosa.setText(String.valueOf(df2.format(first)));
+        versicolor.setText(String.valueOf(df2.format(second)));
+        virginica.setText(String.valueOf(df2.format(third)));
+ 
+        }
+```
 
-<p>Furthermore, your compiled code will have well over 65,536 methods. To be able to handle this condition, add the following option in the <code class="highlighter-rouge">defaultConfig</code>:</p>
+## <a name="head_link6">Conclusion</a>
 
-<figure class="highlight"><pre><code class="language-groovy" data-lang="groovy"><span class="n">multiDexEnabled</span> <span class="kc">true</span></code></pre></figure>
+Hopefully this tutorial has illustrated how the compatibility of DL4J with Android makes it easy to build, train, and evaluate neural networks on mobile devices. We used a simple UI to take input values from the measurement and then passed them as the *Params* in an AsyncTask. The processor intensive steps of data preparation, network layer building, model training, and evaluation of the user data were all performed in the doInBackground() method of the background thread, maintaining a stable and responsive device. Once completed, we passed the output INDArray as the AsyncTask *Results* to onPostExecute() where the the UI was updated to demonstrate the classification results. 
+The limitations of processing power and battery life of mobile devices make training robust, multi-layer networks somewhat unfeasible. To address this limitation, we will next look at an example Android application that saves the trained model on the device for faster performance after an initial model training.
 
-<p>And now, press <strong>Sync Now</strong> to update the project. Finally, make sure that your APK doesn't contain both <code class="highlighter-rouge">lib/armeabi</code> and <code class="highlighter-rouge">lib/armeabi-v7a</code> subdirectories. If it does, move all files to one or the other as some Android devices will have problems with both present.</p>
-
-<h3 id="starting-an-asynchronous-task">Starting an Asynchronous Task</h3>
-
-<p>Training a neural network is CPU-intensive, which is why you wouldn’t want to do it in your application’s UI thread. I’m not too sure if DL4J trains its networks asynchronously by default. Just to be safe, I’ll spawn a separate thread now using the <code class="highlighter-rouge">AsyncTask</code> class.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">AsyncTask</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-        <span class="n">createAndUseNetwork</span><span class="o">();</span>
-    <span class="o">}</span>
-<span class="o">});</span></code></pre></figure>
-
-<p>Because the method <code class="highlighter-rouge">createAndUseNetwork()</code> doesn’t exist yet, create it.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">private</span> <span class="kt">void</span> <span class="nf">createAndUseNetwork</span><span class="o">()</span> <span class="o">{</span>
-
-<span class="o">}</span></code></pre></figure>
-
-<h3 id="creating-a-neural-network">Creating a Neural Network</h3>
-
-<p>DL4J has a very intuitive API. Let us now use it to create a simple multi-layer perceptron with hidden layers. It will take two input values, and spit out one output value. To create the layers, we’ll use the <code class="highlighter-rouge">DenseLayer</code> and <code class="highlighter-rouge">OutputLayer</code> classes. Accordingly, add the following code to the <code class="highlighter-rouge">createAndUseNetwork()</code> method you created in the previous step:</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">DenseLayer</span> <span class="n">inputLayer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DenseLayer</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">nIn</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">nOut</span><span class="o">(</span><span class="mi">3</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">name</span><span class="o">(</span><span class="s">"Input"</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
-
-<span class="n">DenseLayer</span> <span class="n">hiddenLayer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DenseLayer</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">nIn</span><span class="o">(</span><span class="mi">3</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">nOut</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">name</span><span class="o">(</span><span class="s">"Hidden"</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
-
-<span class="n">OutputLayer</span> <span class="n">outputLayer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OutputLayer</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">nIn</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">nOut</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">name</span><span class="o">(</span><span class="s">"Output"</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">build</span><span class="o">();</span></code></pre></figure>
-
-<p>Now that our layers are ready, let’s create a <code class="highlighter-rouge">NeuralNetConfiguration.Builder</code> object to configure our neural network.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">NeuralNetConfiguration</span><span class="o">.</span><span class="na">Builder</span> <span class="n">nncBuilder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NeuralNetConfiguration</span><span class="o">.</span><span class="na">Builder</span><span class="o">();</span>
-<span class="n">nncBuilder</span><span class="o">.</span><span class="na">iterations</span><span class="o">(</span><span class="mi">10000</span><span class="o">);</span>
-<span class="n">nncBuilder</span><span class="o">.</span><span class="na">learningRate</span><span class="o">(</span><span class="mf">0.01</span><span class="o">);</span></code></pre></figure>
-
-<p>In the above code, I’ve set the values of two important parameters: learning rate and number of iterations. Feel free to change those values.</p>
-
-<p>We must now create a <code class="highlighter-rouge">NeuralNetConfiguration.ListBuilder</code> object to actually connect our layers and specify their order.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">NeuralNetConfiguration</span><span class="o">.</span><span class="na">ListBuilder</span> <span class="n">listBuilder</span> <span class="o">=</span> <span class="n">nncBuilder</span><span class="o">.</span><span class="na">list</span><span class="o">();</span>
-<span class="n">listBuilder</span><span class="o">.</span><span class="na">layer</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">inputLayer</span><span class="o">);</span>
-<span class="n">listBuilder</span><span class="o">.</span><span class="na">layer</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">hiddenLayer</span><span class="o">);</span>
-<span class="n">listBuilder</span><span class="o">.</span><span class="na">layer</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="n">outputLayer</span><span class="o">);</span></code></pre></figure>
-
-<p>Additionally, enable backpropagation by adding the following code:</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">listBuilder</span><span class="o">.</span><span class="na">backprop</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span></code></pre></figure>
-
-<p>At this point, we can generate and initialize our neural network as an instance of the <code class="highlighter-rouge">MultiLayerNetwork</code> class.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">MultiLayerNetwork</span> <span class="n">myNetwork</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MultiLayerNetwork</span><span class="o">(</span><span class="n">listBuilder</span><span class="o">.</span><span class="na">build</span><span class="o">());</span>
-<span class="n">myNetwork</span><span class="o">.</span><span class="na">init</span><span class="o">();</span></code></pre></figure>
-
-<h3 id="creating-training-data">Creating Training Data</h3>
-
-<p>To create our training data, we’ll be using the <code class="highlighter-rouge">INDArray</code> class, which is provided by ND4J. Here’s what our training data will look like:</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>INPUTS      EXPECTED OUTPUTS
-------      ----------------
-0,0         0
-0,1         1
-1,0         1
-1,1         0
-</code></pre>
-</div>
-
-<p>As you might have guessed, our neural network will behave like an XOR gate. The training data has four samples, and you must mention it in your code.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">final</span> <span class="kt">int</span> <span class="n">NUM_SAMPLES</span> <span class="o">=</span> <span class="mi">4</span><span class="o">;</span></code></pre></figure>
-
-<p>And now, create two <code class="highlighter-rouge">INDArray</code> objects for the inputs and expected outputs, and initialize them with zeroes.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">INDArray</span> <span class="n">trainingInputs</span> <span class="o">=</span> <span class="n">Nd4j</span><span class="o">.</span><span class="na">zeros</span><span class="o">(</span><span class="n">NUM_SAMPLES</span><span class="o">,</span> <span class="n">inputLayer</span><span class="o">.</span><span class="na">getNIn</span><span class="o">());</span>
-<span class="n">INDArray</span> <span class="n">trainingOutputs</span> <span class="o">=</span> <span class="n">Nd4j</span><span class="o">.</span><span class="na">zeros</span><span class="o">(</span><span class="n">NUM_SAMPLES</span><span class="o">,</span> <span class="n">outputLayer</span><span class="o">.</span><span class="na">getNOut</span><span class="o">());</span></code></pre></figure>
-
-<p>Note that the number of columns in the inputs array is equal to the number of neurons in the input layer. Similarly, the number of columns in the outputs array is equal to the number of neurons in the output layer.</p>
-
-<p>Filling those arrays with the training data is easy. Just use the <code class="highlighter-rouge">putScalar()</code> method:</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="c1">// If 0,0 show 0</span>
-<span class="n">trainingInputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">},</span> <span class="mi">0</span><span class="o">);</span>
-<span class="n">trainingInputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">0</span><span class="o">,</span><span class="mi">1</span><span class="o">},</span> <span class="mi">0</span><span class="o">);</span>
-<span class="n">trainingOutputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">},</span> <span class="mi">0</span><span class="o">);</span>
-
-<span class="c1">// If 0,1 show 1</span>
-<span class="n">trainingInputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">1</span><span class="o">,</span><span class="mi">0</span><span class="o">},</span> <span class="mi">0</span><span class="o">);</span>
-<span class="n">trainingInputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">1</span><span class="o">,</span><span class="mi">1</span><span class="o">},</span> <span class="mi">1</span><span class="o">);</span>
-<span class="n">trainingOutputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">1</span><span class="o">,</span><span class="mi">0</span><span class="o">},</span> <span class="mi">1</span><span class="o">);</span>
-
-<span class="c1">// If 1,0 show 1</span>
-<span class="n">trainingInputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">2</span><span class="o">,</span><span class="mi">0</span><span class="o">},</span> <span class="mi">1</span><span class="o">);</span>
-<span class="n">trainingInputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">2</span><span class="o">,</span><span class="mi">1</span><span class="o">},</span> <span class="mi">0</span><span class="o">);</span>
-<span class="n">trainingOutputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">2</span><span class="o">,</span><span class="mi">0</span><span class="o">},</span> <span class="mi">1</span><span class="o">);</span>
-
-<span class="c1">// If 1,1 show 0</span>
-<span class="n">trainingInputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">3</span><span class="o">,</span><span class="mi">0</span><span class="o">},</span> <span class="mi">1</span><span class="o">);</span>
-<span class="n">trainingInputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">3</span><span class="o">,</span><span class="mi">1</span><span class="o">},</span> <span class="mi">1</span><span class="o">);</span>
-<span class="n">trainingOutputs</span><span class="o">.</span><span class="na">putScalar</span><span class="o">(</span><span class="k">new</span> <span class="kt">int</span><span class="o">[]{</span><span class="mi">3</span><span class="o">,</span><span class="mi">0</span><span class="o">},</span> <span class="mi">0</span><span class="o">);</span></code></pre></figure>
-
-<p>We won’t be using the <code class="highlighter-rouge">INDArray</code> objects directly. Instead, we’ll convert them into a <code class="highlighter-rouge">DataSet</code>.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">DataSet</span> <span class="n">myData</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataSet</span><span class="o">(</span><span class="n">trainingInputs</span><span class="o">,</span> <span class="n">trainingOutputs</span><span class="o">);</span></code></pre></figure>
-
-<p>At this point, we can start the training by calling the <code class="highlighter-rouge">fit()</code> method of the neural network and passing the data set to it.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">myNetwork</span><span class="o">.</span><span class="na">fit</span><span class="o">(</span><span class="n">myData</span><span class="o">);</span></code></pre></figure>
-
-<p>And that’s all there is to it. Your neural network is ready to be used.</p>
-
-<h3 id="conclusion">Conclusion</h3>
-
-<p>In this tutorial, you saw how easy it is to create and train a neural network using the Deeplearning4J library in an Android Studio project. I’d like to warn you, however, that training a neural network on a low-powered, battery operated device might not always be a good idea.</p>
-
-<p>This was originally posted at <a href="http://progur.com/2017/01/how-to-use-deeplearning4j-on-android.html" target="_blank" rel="nofollow">Progur</a> by Ashraff Hathibelagal.
-
-                
-
-<footer class="footer">
-  <div class="container">
-  </div>
-</footer>
+The complete repo for this example is available here: https://github.com/jrmerwin/DL4JIrisClassifierDemo

@@ -1,3 +1,7 @@
+---
+title: Using Deeplearning4J in Android Applications - part 2
+layout: default
+---
 # Using Deeplearning4J in Android Applications
 
 Contents
@@ -372,7 +376,7 @@ The onPostExecute method will recieve an INDArray which contains the nerual netw
 
 This tutorial provides a basic framework for image recognition in an Android Application using a DL4J neural network. It illustrates how to load a pre-trained DL4J model from the raw resources file and how to test user generate input images against the model. The AsyncTask then returns the output to the mainthread and updates the UI.
 
-The complete repo for this example is available [here.](https://github.com/jrmerwin/DL4JImageRecognitionDemo)
+The complete code for this example is available at https://github.com/jrmerwin/DL4JImageRecognitionDemo
 
 
 

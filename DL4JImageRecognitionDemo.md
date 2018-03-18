@@ -1,3 +1,7 @@
+---
+title: Using Deeplearning4J in Android Applications - demo 2
+layout: default
+---
 # Using Deeplearning4J in Android Applications
 
 Contents

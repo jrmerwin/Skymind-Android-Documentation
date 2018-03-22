@@ -57,7 +57,7 @@ multiDexEnabled true
 ```
 
 Finally, a conflict in the junit module versions will likely throw the following error: > Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ.
-This can be suppressed by focing all of the junit modules to use the same version.
+This can be suppressed by forcing all of the junit modules to use the same version.
 ```java
 configurations.all {
     resolutionStrategy.force 'junit:junit:4.12'

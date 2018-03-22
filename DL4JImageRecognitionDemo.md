@@ -14,7 +14,7 @@ Contents
 * [Conclusion](#head_link6)
 
 ## DL4JImageRecognitionDemo
-This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 0..9. The application user interace allows the user to draw a number on the device screen which is then tested against the trained network. The output displays the most probable numeric values and the probability score. This tutorial will cover the use of a trained neural network in an Android Application, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating how to train and save the neural networks used in this application, please see this DL4J quickstart [tutorial](https://deeplearning4j.org/quickstart). More information on general prerequisits for building DL4J Android Applications can be found [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). 
+This example application uses a neural network trained on the standard MNIST dataset of 28x28 greyscale 0..255 pixel value images of hand drawn numbers 0..9. The application user interace allows the user to draw a number on the device screen which is then tested against the trained network. The output displays the most probable numeric values and the probability score. This tutorial will cover the use of a trained neural network in an Android Application, the handling of user generated images, and the output of the results to the UI from a background thread. For a detailed guide demonstrating how to train and save the neural networks used in this application, please see this DL4J quickstart [tutorial](https://deeplearning4j.org/quickstart). More information on general prerequisites for building DL4J Android Applications can be found [here](https://github.com/jrmerwin/Skymind-Android-Documentation/blob/master/Prereqs%20and%20Configuration%20for%20Android.md). 
 
 ![](images/screen2.png)
 ## <a name="head_link1">Setting the Dependencies</a>
@@ -55,7 +55,7 @@ Compiling these dependencies involves a large number of files, thus it is necess
 ```java
 multiDexEnabled true
 ```
-Including multiDex can generate an 'Unable to merge dex' error which can be supressed with these additional exclusions added to the dependencies block
+Including multiDex can generate an 'Unable to merge dex' error which can be suppressed with these additional exclusions added to the dependencies block
 
 ```java
 compile 'com.google.code.findbugs:annotations:3.0.1', {
@@ -64,7 +64,7 @@ compile 'com.google.code.findbugs:annotations:3.0.1', {
 }
 ```
 Finally, a conflict in the junit module versions will give the following error: > Conflict with dependency 'junit:junit' in project ':app'. Resolved versions for app (4.8.2) and test app (4.12) differ.
-This can be suppressed by focing all of the junit modules to use the same version.
+This can be suppressed by forcing  all of the junit modules to use the same version.
 ```java
 configurations.all {
     resolutionStrategy.force 'junit:junit:4.12'
@@ -72,7 +72,7 @@ configurations.all {
 ```
 ## <a name="head_link2">Training and loading the Mnist model in the Android project resources</a>
 
-Using a nerual network requires a significant amount of processor power, which is in limited supply on mobile devices. Therefore, a background thread must be used for loading of the trained neural network and the testing of the user drawn image by using AsyncTask. In this application we will run the canvas.draw code on the main thread and use an AsyncTask to load the drawn image from internal memory and test it against the trained model on a background thread. First, lets look at how to save the trained neural network we will be using in the application.
+Using a neural  network requires a significant amount of processor power, which is in limited supply on mobile devices. Therefore, a background thread must be used for loading of the trained neural network and the testing of the user drawn image by using AsyncTask. In this application we will run the canvas.draw code on the main thread and use an AsyncTask to load the drawn image from internal memory and test it against the trained model on a background thread. First, lets look at how to save the trained neural network we will be using in the application.
 
 You will need to begin by following the DeepLearning4J quick start [guide](https://deeplearning4j.org/quickstart) to set up, train, and save neural network models on a desktop computer. The DL4J example which trains and saves the Mnist model used in this application is *MnistImagePipelineExampleSave.java* and is included in the quick start guide referenced above. The code for the Mnist demo is also available [here](https://gist.github.com/tomthetrainer/7cb2fbc14a5c631a567a98c3134f7dd6). Running this demo will train the Mnist neural network model and save it as *"trained_mnist_model.zip"* in the *dl4j\target folder* of the *dl4j-examples* directory. You can then copy the file and save it in the raw folder of your Android project.
 
@@ -131,7 +131,7 @@ private class AsyncTaskRunner extends AsyncTask<String, Integer, INDArray> {
 
 ## <a name="head_link3">Handling images from user input</a>
  
-Now lets add the code for the drawing canvas that will run on the main thread and allow the user to draw a number on the screen. This is a generic draw program written as an inner class within the MainActivity. It extends View and overrides a series of methods. The drawing is saved to internal memory and the AsyncTask is executed with the image Path passed to it in the onTouchEvent case statment for case *MotionEvent.ACTION_UP*. This has the streamline action of automatically returning results for an image after the user completes the drawing. 
+Now lets add the code for the drawing canvas that will run on the main thread and allow the user to draw a number on the screen. This is a generic draw program written as an inner class within the MainActivity. It extends View and overrides a series of methods. The drawing is saved to internal memory and the AsyncTask is executed with the image Path passed to it in the onTouchEvent case statement for case *MotionEvent.ACTION_UP*. This has the streamline action of automatically returning results for an image after the user completes the drawing. 
 ```java
 //code for the drawing input
     public class DrawingView extends View {
@@ -264,7 +264,7 @@ public String saveDrawing(){
         return directory.getAbsolutePath();
     }
 ```
-Next we will write the loadImageFromStorage method which will use the absolute path returned from saveDrawing() to load the saved image and display it in the UI as part of the outut display. It uses a try / catch block and a FileInputStream to set the image to the ImageView *img* in the UI layout.
+Next we will write the loadImageFromStorage method which will use the absolute path returned from saveDrawing() to load the saved image and display it in the UI as part of the output display. It uses a try / catch block and a FileInputStream to set the image to the ImageView *img* in the UI layout.
 ```java
     private void loadImageFromStorage(String path)
     {
@@ -315,7 +315,7 @@ Finally, we need a few methods we can call to control the visibility of an 'In P
         bar.setVisibility(View.INVISIBLE);
     }
 ```
-Now lets go to the onCreate method to initialize the draw canvas and set some global variables.
+Now let's go to the onCreate method to initialize the draw canvas and set some global variables.
 ```java
 public class MainActivity extends AppCompatActivity {
 
@@ -344,7 +344,7 @@ Now we can complete our AsyncTask by overriding the onProgress and onPostExecute
             super.onProgressUpdate(values);
         }
 ```
-The onPostExecute method will recieve an INDArray which contains the nerual network results as a 1x10 array of probability values that the input drawing is each possible digit (0..9). From this we need to determine which row of the array contains the largest value and what the size of that value is. These two values will determine which number the neural network has classified the drawing as and how confident the network score is. These values will be refered to in the UI as *Prediction* and the *Confidence*, respectively. In the code below, the individual values for each position of the INDArray are passed to an array of type double using the getDouble() method on the result INDArray. We then get references to the TextViews which will be updated in the UI and call our helper methods on the array to return the array maximum (confidence) and index of the largest value (predicition). Note we also need to limit the number of decimal places reported on the probabilities by setting a DecimalFormat pattern.
+The onPostExecute method will receive an INDArray which contains the neural network results as a 1x10 array of probability values that the input drawing is each possible digit (0..9). From this we need to determine which row of the array contains the largest value and what the size of that value is. These two values will determine which number the neural network has classified the drawing as and how confident the network score is. These values will be referred to in the UI as *Prediction* and the *Confidence*, respectively. In the code below, the individual values for each position of the INDArray are passed to an array of type double using the getDouble() method on the result INDArray. We then get references to the TextViews which will be updated in the UI and call our helper methods on the array to return the array maximum (confidence) and index of the largest value (prediction). Note we also need to limit the number of decimal places reported on the probabilities by setting a DecimalFormat pattern.
 ```java
 
         @Override
@@ -374,7 +374,7 @@ The onPostExecute method will recieve an INDArray which contains the nerual netw
 
 ## <a name="head_link6">Conclusion</a>
 
-This tutorial provides a basic framework for image recognition in an Android Application using a DL4J neural network. It illustrates how to load a pre-trained DL4J model from the raw resources file and how to test user generate input images against the model. The AsyncTask then returns the output to the mainthread and updates the UI.
+This tutorial provides a basic framework for image recognition in an Android Application using a DL4J neural network. It illustrates how to load a pre-trained DL4J model from the raw resources file and how to test user generate input images against the model. The AsyncTask then returns the output to the main thread and updates the UI.
 
 The complete code for this example is available at https://github.com/jrmerwin/DL4JImageRecognitionDemo
 

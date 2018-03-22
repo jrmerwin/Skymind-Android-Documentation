@@ -50,7 +50,7 @@ packagingOptions {
             exclude 'org/bytedeco/javacpp/windows-x86_64/msvcr120.dll'
         }
  ```       
-After addind the above dependencies and exclusions to the build.gradle file, try syncing Gradle with to see if any other exclusions are needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path is: *> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'*
+After adding the above dependencies and exclusions to the build.gradle file, try syncing Gradle with to see if any other exclusions are needed. The error message will identify the file path that should be added to the list of exclusions. An example error message with file path is: *> More than one file was found with OS independent path 'org/bytedeco/javacpp/ windows-x86_64/msvp120.dll'*
 Compiling these dependencies involves a large number of files, thus it is necessary to set multiDexEnabled to true in defaultConfig.
 ```java
 multiDexEnabled true
@@ -190,7 +190,7 @@ Nd4j.getMemoryManager().setAutoGcWindow(5000)
 // this will totally disable it
 Nd4j.getMemoryManager().togglePeriodicGc(false);
 ```
-The example below ilustrates the use of a Workspace for memory allocation in the AsyncTask of and Android Application. More information concerning ND4J Workspaces can be found [here](https://deeplearning4j.org/workspaces).
+The example below illustrates the use of a Workspace for memory allocation in the AsyncTask of and Android Application. More information concerning ND4J Workspaces can be found [here](https://deeplearning4j.org/workspaces).
 ```java
 import org.nd4j.linalg.api.memory.MemoryWorkspace;
 import org.nd4j.linalg.api.memory.conf.WorkspaceConfiguration;
@@ -258,7 +258,7 @@ Practical considerations regarding performance limits are needed when building A
 
 When training on a device is a reasonable option, the application performance can be improved by saving the trained model on the phone's external storage once an initial training is complete. The trained model can then be used as an application resource. This approach is useful for training networks with data obtained from user input. The following code illustrates how to train a network and save it on the phone's external resources.
 
-For API 23 and greater, you will need to include the permissions in your manifest and also programmatically request the read and write permissions in your activity. The required Manifest persmissions are:
+For API 23 and greater, you will need to include the permissions in your manifest and also programmatically request the read and write permissions in your activity. The required Manifest permissions are:
 ``` xml
 <manifest>
         <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -321,7 +321,7 @@ try{
     Log.e("Load from External Storage error", e.getMessage());
 }
 ```
-For larger or more complex neural networks like Convolutional or Reccurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. As an alternative, the Neural Network can be trained on the desktop, saved via ModelSerializer, and then loaded as a pre-trained model in the application. Using a pre-trained model in you Android application can be achieved with the following steps:
+For larger or more complex neural networks like Convolutional or Recurrent Neural Networks, training on the device is not a realistic option as long processing times during network training run the risk of generating an OutOfMemoryError and make for a poor user experience. As an alternative, the Neural Network can be trained on the desktop, saved via ModelSerializer, and then loaded as a pre-trained model in the application. Using a pre-trained model in you Android application can be achieved with the following steps:
 * Train the yourModel on desktop and save via modelSerializer.
 * Create a raw resource folder in the res directory of the application.
 * Copy yourModel.zip file into the raw folder.

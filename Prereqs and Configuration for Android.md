@@ -72,7 +72,7 @@ buildTypes {
     }
 }
 ```
-It is recommended to upgrade your ProGuard in the Android SDK to the latest release (5.1 or higher). Upgrading the buildtools or other aspects of the sdk your proguard might reset to the version being shipped with the sdk. In order to force ProGaurd to use a different version of ProGuard than the Android Gradle default you can include this in the buildscript of build.gradle file:
+It is recommended to upgrade your ProGuard in the Android SDK to the latest release (5.1 or higher). Note that upgrading the build tools or other aspects of your SDK might cause Proguard to reset to the version shipped with the SDK. In order to force ProGuard to use a version of other than the Android Gradle default, you can include this in the buildscript of `build.gradle` file:
 ``` java
 buildscript {
     configurations.all {
